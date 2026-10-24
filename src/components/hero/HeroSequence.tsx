@@ -6,9 +6,9 @@ import { HeroAssetCache } from "@/lib/hero/frame-cache";
 import {
   FILM_END,
   PIN_VH,
-  TIMELINE_LENGTH,
   computeLayout,
   safeRightFor,
+  timelineAt,
   drawLockup,
   drawScene,
   drawWallText,
@@ -62,7 +62,7 @@ export function HeroSequence() {
       const total = section.offsetHeight - sticky.offsetHeight;
       if (total <= 0) return 0;
       const p = Math.min(1, Math.max(0, -section.getBoundingClientRect().top / total));
-      return p * TIMELINE_LENGTH;
+      return timelineAt(p);
     };
     let t = readTarget();
 

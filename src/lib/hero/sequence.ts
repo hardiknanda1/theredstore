@@ -18,8 +18,35 @@ const DISSOLVE = [FILM_END, FILM_END + 12] as const;
 const RED_IN = [FILM_END + 10, FILM_END + 20] as const;
 const WORDS_IN = [FILM_END + 16, FILM_END + 28] as const;
 export const TIMELINE_LENGTH = FILM_END + 36;
-/** The hero stays pinned for this much scroll (in viewport heights). */
-export const PIN_VH = 350;
+
+/**
+ * Scroll pacing: how much scroll each stretch of the timeline gets, relative to the rest.
+ * Frames 87–150 (the thread gown, streetwear, tailoring and the lehenga's arrival) play
+ * slower than the rest of the film.
+ */
+const PACING: { from: number; to: number; weight: number }[] = [
+  { from: 0, to: 86, weight: 1 },
+  { from: 86, to: LEHENGA_START + 6, weight: 1.6 },
+  { from: LEHENGA_START + 6, to: TIMELINE_LENGTH, weight: 1 },
+];
+const SCROLL_UNITS = PACING.reduce((n, s) => n + (s.to - s.from) * s.weight, 0);
+
+/** Timeline position for scroll progress p (0–1) through the pinned section. */
+export function timelineAt(p: number): number {
+  let remaining = Math.min(1, Math.max(0, p)) * SCROLL_UNITS;
+  for (const s of PACING) {
+    const span = (s.to - s.from) * s.weight;
+    if (remaining <= span) return s.from + remaining / s.weight;
+    remaining -= span;
+  }
+  return TIMELINE_LENGTH;
+}
+
+/**
+ * The hero stays pinned for this much scroll (in viewport heights). 350vh covers the
+ * timeline at normal pace; the slower stretch adds to it so the rest keeps its speed.
+ */
+export const PIN_VH = Math.round((350 * SCROLL_UNITS) / TIMELINE_LENGTH);
 
 const smoothstep = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));

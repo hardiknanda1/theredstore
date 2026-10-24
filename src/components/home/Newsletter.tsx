@@ -32,7 +32,7 @@ export function Newsletter() {
   };
 
   return (
-    <section aria-labelledby="newsletter-title" className="bg-crimson text-bone">
+    <section aria-labelledby="newsletter-title" className="bg-[#4a0000] text-bone">
       <div className="container-luxe grid gap-10 py-20 md:grid-cols-12 md:items-end md:py-28">
         <div className="md:col-span-6">
           <p className="eyebrow text-bone/70">The Red Letter</p>
@@ -69,7 +69,7 @@ export function Newsletter() {
                 <button
                   type="submit"
                   disabled={status.state === "sending"}
-                  className="eyebrow bg-bone px-8 py-4 text-crimson transition-colors hover:bg-ink hover:text-bone disabled:opacity-60"
+                  className="eyebrow bg-bone px-8 py-4 text-[#4a0000] transition-colors hover:bg-scarlet hover:text-bone disabled:opacity-60"
                 >
                   {status.state === "sending" ? "Subscribing…" : "Subscribe"}
                 </button>
