@@ -1,11 +1,11 @@
-import { E_SPRITE_URL, FILM_FRAMES, TYPE_SPRITE_URL, frameUrl, stillUrl, type FrameSet, type HeroAssets, type StillId } from "./sequence";
+import { E_SPRITE_URL, FILM_FRAMES, FILM_START, TYPE_SPRITE_URL, frameUrl, stillUrl, type FrameSet, type HeroAssets, type StillId } from "./sequence";
 
 /** Coarse-to-fine order: every 32nd, 16th … film frame, so any scroll position soon has a neighbour. */
-function filmOrder(count: number): number[] {
+function filmOrder(start: number, count: number): number[] {
   const order: number[] = [];
-  const seen = new Set<number>([0]);
+  const seen = new Set<number>([start]);
   for (let stride = 32; stride >= 1; stride /= 2) {
-    for (let i = 0; i < count; i += stride) {
+    for (let i = start; i < count; i += stride) {
       if (!seen.has(i)) {
         seen.add(i);
         order.push(i);
@@ -19,7 +19,7 @@ const STILLS: StillId[] = ["lehenga", "studio"];
 
 /**
  * Loads and decodes the hero imagery (img.decode keeps decoding off the main thread), a few
- * at a time, and keeps the decoded images for instant drawing. Frame 1 loads first, then the
+ * at a time, and keeps the decoded images for instant drawing. The opening frame loads first, then the
  * two stills and the type sprites, then the rest of the film coarse-to-fine.
  */
 export class HeroAssetCache implements HeroAssets {
@@ -28,7 +28,7 @@ export class HeroAssetCache implements HeroAssets {
   typeSprite: HTMLImageElement | null = null;
   eSprite: HTMLImageElement | null = null;
   loaded = 0;
-  readonly total = FILM_FRAMES + STILLS.length + 2;
+  readonly total = FILM_FRAMES - FILM_START + STILLS.length + 2;
   private disposed = false;
   private pending = new Set<HTMLImageElement>();
 
@@ -43,10 +43,10 @@ export class HeroAssetCache implements HeroAssets {
       ...STILLS.map((id) => () => this.load(stillUrl(this.set, id), (img) => this.stills.set(id, img))),
       () => this.load(TYPE_SPRITE_URL, (img) => (this.typeSprite = img)),
       () => this.load(E_SPRITE_URL, (img) => (this.eSprite = img)),
-      ...filmOrder(FILM_FRAMES).map((i) => () => this.load(frameUrl(this.set, i), (img) => (this.frames[i] = img))),
+      ...filmOrder(FILM_START, FILM_FRAMES).map((i) => () => this.load(frameUrl(this.set, i), (img) => (this.frames[i] = img))),
     ];
-    // Frame 1 alone first, so the opening picture appears as early as possible.
-    this.load(frameUrl(this.set, 0), (img) => (this.frames[0] = img)).finally(() => {
+    // The opening frame alone first, so the first picture appears as early as possible.
+    this.load(frameUrl(this.set, FILM_START), (img) => (this.frames[FILM_START] = img)).finally(() => {
       for (let i = 0; i < this.concurrency; i++) void this.worker(jobs);
     });
   }

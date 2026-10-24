@@ -25,7 +25,7 @@ Set `NEXT_PUBLIC_SITE_URL` in production so social-image URLs resolve to the rea
 | `src/lib/cart-store.ts` | Cart store (localStorage-backed, synced across tabs) |
 | `src/components/` | Hero, home sections, shop, product, cart, checkout, contact, layout |
 | `src/app/api/` | `newsletter`, `contact` and `checkout` endpoints (validation only; see below) |
-| `public/frames/` | Film frames 1–144: `desktop/` holds the original JPEGs, `mobile/` 960px WebP copies |
+| `public/frames/` | Film frames 7–144: `desktop/` holds the original JPEGs, `mobile/` 960px WebP copies |
 | `public/hero/` | The lehenga still and empty-studio plate (desktop and mobile), and the OBSESSED type and E mattes |
 | `public/products/`, `public/editorial/` | Product and editorial imagery (studio stills; see below) |
 | `scripts/` | Python scripts that generate the studio stills, the hero plate and E sprite, and the wall-drift track |
@@ -34,7 +34,7 @@ Set `NEXT_PUBLIC_SITE_URL` in production so social-image URLs resolve to the rea
 
 | Frames | What plays |
 | --- | --- |
-| 1–144 | The original film frames, unchanged |
+| 7–144 | The original film frames, unchanged (the film opens on frame 7; frames 1–6 are not used) |
 | 145–179 | The lehenga still, framed to match the film (cross-fades in from frame 144) |
 | 151–179 | OBSESSED over it (the word fades in over two frames) |
 | then | The model and OBSESSED dissolve into the empty studio; the centre E stays exactly where it was |
@@ -45,7 +45,7 @@ Set `NEXT_PUBLIC_SITE_URL` in production so social-image URLs resolve to the rea
 - **Empty studio.** The plate the model dissolves into is rebuilt from the lehenga still: each row behind her is interpolated across from the wall and floor on either side, and the wall texture is restored from untouched areas.
 - **Lockup type.** The R and D are set in **Noto Serif Display Bold**, the closest match to the OBSESSED E among 30+ Didone and display serifs. They are sized from that E's cap height, sit on its baseline, and keep OBSESSED's letter spacing. The E stays white, R and D are crimson, and THE and COMPANY are off-white.
 - **Wall typography.** "Make the RED statement" is drawn on the left wall for the whole hero. The camera drifts slightly during the film, and the lehenga still sits a fraction of a pixel off it. Both were measured (`wall-track.ts`) and compensated, so the type stays fixed to the wall.
-- **Loading.** Frame 1 loads first, then the stills, then the rest of the film coarse-to-fine (every 32nd, 16th … frame). Everything is decoded with `img.decode()` and drawn in `requestAnimationFrame` only while the hero is on screen. Small screens and Save-Data connections get 960px WebP copies.
+- **Loading.** Frame 7 loads first, then the stills, then the rest of the film coarse-to-fine (every 32nd, 16th … frame). Everything is decoded with `img.decode()` and drawn in `requestAnimationFrame` only while the hero is on screen. Small screens and Save-Data connections get 960px WebP copies.
 - The canvas is sized for the device pixel ratio (capped at 2×) and redrawn on resize. Portrait screens scale the film down just enough to keep the wall, the figure, the model and the lockup in view.
 
 ## Imagery

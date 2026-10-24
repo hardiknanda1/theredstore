@@ -3,7 +3,7 @@ import { STUDIO_DRIFT, WALL_DRIFT } from "./wall-track";
 /**
  * Timeline of the hero, in frame units (one unit = one frame of scroll):
  *
- *   0 – 144   film frames 1–144, exactly as supplied
+ *   6 – 144   film frames 7–144, exactly as supplied (the film opens on frame 7)
  *   144 – 179 frames 145–179: the lehenga still, framed like the film (cross-faded in from frame 144)
  *   150 – 152 OBSESSED fades in over it
  *   179 – 191 the model and OBSESSED dissolve into the empty studio; the centre E stays
@@ -11,6 +11,8 @@ import { STUDIO_DRIFT, WALL_DRIFT } from "./wall-track";
  *   207 – 215 hold
  */
 export const FILM_FRAMES = 144;
+/** Index of the first film frame shown (frame 7); frames 1–6 are not used. */
+export const FILM_START = 6;
 export const LEHENGA_START = 144;
 export const OBSESSED_START = 150;
 export const FILM_END = 179;
@@ -25,7 +27,7 @@ export const TIMELINE_LENGTH = FILM_END + 36;
  * slower than the rest of the film.
  */
 const PACING: { from: number; to: number; weight: number }[] = [
-  { from: 0, to: 86, weight: 1 },
+  { from: FILM_START, to: 86, weight: 1 },
   { from: 86, to: LEHENGA_START + 6, weight: 2.2 },
   { from: LEHENGA_START + 6, to: TIMELINE_LENGTH, weight: 1 },
 ];
@@ -139,7 +141,7 @@ export const STUDIO_BOTTOM = "#9c151b";
 
 /** Index of the film frame (0-based) shown at timeline position t, within the original film. */
 export function filmIndexFor(t: number) {
-  return Math.min(FILM_FRAMES - 1, Math.max(0, Math.floor(t)));
+  return Math.min(FILM_FRAMES - 1, Math.max(FILM_START, Math.floor(t)));
 }
 
 export function paintBackdrop(ctx: CanvasRenderingContext2D, vw: number, vh: number, r: Rect) {

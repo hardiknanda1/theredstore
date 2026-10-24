@@ -5,6 +5,7 @@ import { notoSerifDisplay, ptSerif } from "@/lib/fonts";
 import { HeroAssetCache } from "@/lib/hero/frame-cache";
 import {
   FILM_END,
+  FILM_START,
   PIN_VH,
   computeLayout,
   safeRightFor,
@@ -68,7 +69,7 @@ export function HeroSequence() {
 
     const cache = new HeroAssetCache(pickFrameSet(), () => {
       setProgress(cache.loaded / cache.total);
-      if (cache.film(0)) setFirstFrame(true);
+      if (cache.film(FILM_START)) setFirstFrame(true);
       // A newly decoded image may be closer to what this position should show.
       dirty = true;
       if (!running) draw();
