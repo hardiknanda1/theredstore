@@ -26,7 +26,7 @@ export const TIMELINE_LENGTH = FILM_END + 36;
  */
 const PACING: { from: number; to: number; weight: number }[] = [
   { from: 0, to: 86, weight: 1 },
-  { from: 86, to: LEHENGA_START + 6, weight: 1.6 },
+  { from: 86, to: LEHENGA_START + 6, weight: 2.2 },
   { from: LEHENGA_START + 6, to: TIMELINE_LENGTH, weight: 1 },
 ];
 const SCROLL_UNITS = PACING.reduce((n, s) => n + (s.to - s.from) * s.weight, 0);

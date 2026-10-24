@@ -40,7 +40,7 @@ Set `NEXT_PUBLIC_SITE_URL` in production so social-image URLs resolve to the rea
 | then | The model and OBSESSED dissolve into the empty studio; the centre E stays exactly where it was |
 | then | R and D slide in beside the E, then THE and COMPANY appear, and the composition holds |
 
-- The section is pinned for about 413vh and scroll maps continuously onto that timeline, so scrolling up plays it backwards. Frames 87–150 get 1.6× as much scroll per frame as the rest (`PACING` in `sequence.ts`), so the gown, streetwear, tailoring and the lehenga linger.
+- The section is pinned for about 475vh and scroll maps continuously onto that timeline, so scrolling up plays it backwards. Frames 87–150 get 2.2× as much scroll per frame as the rest (`PACING` in `sequence.ts`), so the gown, streetwear, tailoring and the lehenga linger.
 - **OBSESSED** is lifted from the supplied OBSESSED image as two alpha mattes (`scripts/hero_plate.py`): the word without its centre E, and the E alone. They are drawn over the lehenga still at the same position and size, so the picture never changes framing. During the dissolve the word fades and the E stays exactly where it is.
 - **Empty studio.** The plate the model dissolves into is rebuilt from the lehenga still: each row behind her is interpolated across from the wall and floor on either side, and the wall texture is restored from untouched areas.
 - **Lockup type.** The R and D are set in **Noto Serif Display Bold**, the closest match to the OBSESSED E among 30+ Didone and display serifs. They are sized from that E's cap height, sit on its baseline, and keep OBSESSED's letter spacing. The E stays white, R and D are crimson, and THE and COMPANY are off-white.
