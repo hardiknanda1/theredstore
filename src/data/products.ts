@@ -55,8 +55,8 @@ export const products: Product[] = [
     price: 4850,
     sizes: ["XS", "S", "M", "L"],
     images: [
-      img("filament-gown-1", "The Filament Gown in garnet, its threadwork pooled on the studio floor"),
-      img("filament-gown-2", "The Filament Gown's fringed hem, seen from the side"),
+      img("filament-gown-still-1", "The Filament Gown in garnet, its threadwork pooled on the studio floor"),
+      img("filament-gown-still-2", "The Filament Gown's fringed hem, seen from the side"),
     ],
     summary: "Hand-knotted threadwork over a sheer second skin.",
     description:
@@ -74,8 +74,8 @@ export const products: Product[] = [
     price: 7800,
     sizes: ["XS", "S", "M", "L"],
     images: [
-      img("rani-bridal-lehenga-1", "The Rani lehenga in ruby velvet, its gold zari embroidery fanned out"),
-      img("rani-bridal-lehenga-2", "The lehenga's embroidered panels from another angle"),
+      img("rani-bridal-lehenga-still-1", "The Rani lehenga in ruby velvet, its gold zari embroidery fanned out"),
+      img("rani-bridal-lehenga-still-2", "The lehenga's embroidered panels from another angle"),
     ],
     summary: "Zardozi-embroidered silk velvet in heirloom ruby.",
     description:
@@ -93,8 +93,8 @@ export const products: Product[] = [
     price: 1650,
     sizes: APPAREL,
     images: [
-      img("oversized-tailored-blazer-1", "The Oversized Tailored Blazer in crimson gabardine, folded"),
-      img("oversized-tailored-blazer-2", "The folded blazer showing its collar and buttons"),
+      img("oversized-tailored-blazer-still-1", "The Oversized Tailored Blazer in crimson gabardine, folded"),
+      img("oversized-tailored-blazer-still-2", "The folded blazer showing its collar and buttons"),
     ],
     summary: "Dropped shoulders, single-breasted, cut long.",
     description:
@@ -112,8 +112,8 @@ export const products: Product[] = [
     price: 145,
     sizes: APPAREL,
     images: [
-      img("heavyweight-boxy-tee-1", "Two Heavyweight Boxy Tees in scarlet, folded with the ribbed neck on top"),
-      img("heavyweight-boxy-tee-2", "The folded tees from the side, showing the weight of the jersey"),
+      img("heavyweight-boxy-tee-still-1", "Two Heavyweight Boxy Tees in scarlet, folded with the ribbed neck on top"),
+      img("heavyweight-boxy-tee-still-2", "The folded tees from the side, showing the weight of the jersey"),
     ],
     summary: "300gsm loopback jersey with a dropped shoulder.",
     description:
@@ -131,8 +131,8 @@ export const products: Product[] = [
     price: 260,
     sizes: APPAREL,
     images: [
-      img("utility-cargo-short-1", "The Utility Cargo Short in scarlet twill, folded with its drawcords"),
-      img("utility-cargo-short-2", "The folded cargo shorts from the side"),
+      img("utility-cargo-short-still-1", "The Utility Cargo Short in scarlet twill, folded with its drawcords"),
+      img("utility-cargo-short-still-2", "The folded cargo shorts from the side"),
     ],
     summary: "Knee-length twill with bellowed cargo pockets.",
     description:
@@ -150,8 +150,8 @@ export const products: Product[] = [
     price: 520,
     sizes: APPAREL,
     images: [
-      img("wide-cargo-trouser-1", "The Wide Cargo Trouser in crimson, folded with the pressed crease on top"),
-      img("wide-cargo-trouser-2", "The folded trousers stacked, seen from the side"),
+      img("wide-cargo-trouser-still-1", "The Wide Cargo Trouser in crimson, folded with the pressed crease on top"),
+      img("wide-cargo-trouser-still-2", "The folded trousers stacked, seen from the side"),
     ],
     summary: "A wide, full-length leg with tailored creases.",
     description:
@@ -169,8 +169,8 @@ export const products: Product[] = [
     price: 340,
     sizes: APPAREL,
     images: [
-      img("second-skin-bodysuit-1", "The Second Skin Bodysuit in cherry jersey, laid in soft folds"),
-      img("second-skin-bodysuit-2", "The bodysuit's matte jersey from another angle"),
+      img("second-skin-bodysuit-still-1", "The Second Skin Bodysuit in cherry jersey, laid in soft folds"),
+      img("second-skin-bodysuit-still-2", "The bodysuit's matte jersey from another angle"),
     ],
     summary: "Seamless, head-to-toe, the colour of the film.",
     description:
@@ -188,8 +188,8 @@ export const products: Product[] = [
     price: 690,
     sizes: ["EU 36", "EU 37", "EU 38", "EU 39", "EU 40", "EU 41", "EU 42", "EU 43", "EU 44", "EU 45"],
     images: [
-      img("platform-trainer-1", "The Platform Trainer in cherry leather"),
-      img("platform-trainer-2", "The Platform Trainer from the toe"),
+      img("platform-trainer-still-1", "The Platform Trainer in cherry leather"),
+      img("platform-trainer-still-2", "The Platform Trainer from the toe"),
     ],
     summary: "A sculpted 5cm sole in tonal leather and mesh.",
     description:
@@ -207,8 +207,8 @@ export const products: Product[] = [
     price: 35,
     sizes: ["S", "M", "L"],
     images: [
-      img("ribbed-sport-sock-1", "A rolled pair of Ribbed Sport Socks in scarlet"),
-      img("ribbed-sport-sock-2", "The rolled socks from another angle"),
+      img("ribbed-sport-sock-still-1", "A rolled pair of Ribbed Sport Socks in scarlet"),
+      img("ribbed-sport-sock-still-2", "The rolled socks from another angle"),
     ],
     summary: "Thick-ribbed cotton, worn pulled up.",
     description:
@@ -226,8 +226,8 @@ export const products: Product[] = [
     price: 890,
     sizes: ONE,
     images: [
-      img("messenger-sling-1", "The Messenger Sling in oxblood leather with its webbing strap"),
-      img("messenger-sling-2", "The Messenger Sling's buckled flap"),
+      img("messenger-sling-still-1", "The Messenger Sling in oxblood leather with its webbing strap"),
+      img("messenger-sling-still-2", "The Messenger Sling's buckled flap"),
     ],
     summary: "Full-grain leather with an adjustable webbing strap.",
     description:
@@ -245,8 +245,8 @@ export const products: Product[] = [
     price: 1250,
     sizes: ONE,
     images: [
-      img("top-handle-mini-bag-1", "The Top-Handle Mini Bag in garnet leather"),
-      img("top-handle-mini-bag-2", "The mini bag's buckle strap and clasp"),
+      img("top-handle-mini-bag-still-1", "The Top-Handle Mini Bag in garnet leather"),
+      img("top-handle-mini-bag-still-2", "The mini bag's buckle strap and clasp"),
     ],
     summary: "Structured leather with a polished buckle strap.",
     description:
@@ -264,8 +264,8 @@ export const products: Product[] = [
     price: 420,
     sizes: ["S", "M", "L"],
     images: [
-      img("wide-brim-raffia-hat-1", "The Wide-Brim Raffia Hat in crimson"),
-      img("wide-brim-raffia-hat-2", "The hat's woven brim and grosgrain band"),
+      img("wide-brim-raffia-hat-still-1", "The Wide-Brim Raffia Hat in crimson"),
+      img("wide-brim-raffia-hat-still-2", "The hat's woven brim and grosgrain band"),
     ],
     summary: "Hand-woven raffia with a frayed, unfinished brim.",
     description:
@@ -283,8 +283,8 @@ export const products: Product[] = [
     price: 95,
     sizes: ONE,
     images: [
-      img("six-panel-cap-1", "The Six-Panel Cap in vermilion"),
-      img("six-panel-cap-2", "The cap from the back"),
+      img("six-panel-cap-still-1", "The Six-Panel Cap in vermilion"),
+      img("six-panel-cap-still-2", "The cap from the back"),
     ],
     summary: "Brushed cotton with a curved peak.",
     description:
@@ -302,8 +302,8 @@ export const products: Product[] = [
     price: 165,
     sizes: ONE,
     images: [
-      img("satin-tie-1", "The Satin Tie in garnet, rolled"),
-      img("satin-tie-2", "The rolled tie and its blade tip"),
+      img("satin-tie-still-1", "The Satin Tie in garnet, rolled"),
+      img("satin-tie-still-2", "The rolled tie and its blade tip"),
     ],
     summary: "Heavy silk satin, seven-fold construction.",
     description:
@@ -321,8 +321,8 @@ export const products: Product[] = [
     price: 240,
     sizes: ONE,
     images: [
-      img("luminous-tie-1", "The Luminous Tie in vermilion, rolled"),
-      img("luminous-tie-2", "The rolled Luminous Tie from another angle"),
+      img("luminous-tie-still-1", "The Luminous Tie in vermilion, rolled"),
+      img("luminous-tie-still-2", "The rolled Luminous Tie from another angle"),
     ],
     summary: "Satin edged with a fine reflective piping.",
     description:
@@ -340,8 +340,8 @@ export const products: Product[] = [
     price: 680,
     sizes: ONE,
     images: [
-      img("embroidered-tulle-dupatta-1", "The Embroidered Tulle Dupatta in ruby, its gold border along the edge"),
-      img("embroidered-tulle-dupatta-2", "The dupatta's scattered sequins and border"),
+      img("embroidered-tulle-dupatta-still-1", "The Embroidered Tulle Dupatta in ruby, its gold border along the edge"),
+      img("embroidered-tulle-dupatta-still-2", "The dupatta's scattered sequins and border"),
     ],
     summary: "Sheer tulle veil with a hand-embroidered border.",
     description:
