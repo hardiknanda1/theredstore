@@ -117,14 +117,6 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
                 </details>
               </div>
 
-              {product.filmFrame && (
-                <p className="mt-6 text-xs text-stone">
-                  Seen in the campaign film, frame {product.filmFrame} of 180.{" "}
-                  <Link href="/#top" className="underline underline-offset-4 hover:text-charcoal">
-                    Watch the film
-                  </Link>
-                </p>
-              )}
             </div>
           </div>
         </div>

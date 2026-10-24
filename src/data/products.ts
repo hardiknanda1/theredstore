@@ -2,8 +2,9 @@ import type { ShadeId } from "./shades";
 
 /**
  * Sample catalogue. All product data lives here so it can be swapped for a real catalogue
- * or CMS feed without touching components. Apparel, footwear, bag and accessory imagery is
- * cropped from the RED campaign film; lifestyle objects are studio stills.
+ * or CMS feed without touching components. Product imagery is a set of studio stills
+ * (scripts/studio_render.py) standing in until photography is available: drop real photos
+ * into public/products/ under the same file names.
  */
 
 export type CategoryId = "apparel" | "streetwear" | "footwear" | "bags" | "accessories" | "lifestyle";
@@ -38,8 +39,6 @@ export interface Product {
   featured: number;
   /** ISO date used for "Newest" sorting. */
   added: string;
-  /** Frame of the campaign film the piece appears in. */
-  filmFrame?: number;
 }
 
 const APPAREL = ["XS", "S", "M", "L", "XL"];
@@ -56,9 +55,8 @@ export const products: Product[] = [
     price: 4850,
     sizes: ["XS", "S", "M", "L"],
     images: [
-      img("filament-gown-1", "Model in the Filament Gown, arms outstretched, red threads falling to the floor"),
-      img("filament-gown-2", "Close view of the gown's woven red threadwork bodice"),
-      img("filament-gown-3", "The gown's long, fringed skirt pooling on the studio floor"),
+      img("filament-gown-1", "The Filament Gown in garnet, its threadwork pooled on the studio floor"),
+      img("filament-gown-2", "The Filament Gown's fringed hem, seen from the side"),
     ],
     summary: "Hand-knotted threadwork over a sheer second skin.",
     description:
@@ -67,7 +65,6 @@ export const products: Product[] = [
     composition: "Viscose filament 82%, polyamide 18%. Base: polyamide 78%, elastane 22%.",
     featured: 1,
     added: "2026-09-12",
-    filmFrame: 90,
   },
   {
     slug: "rani-bridal-lehenga",
@@ -77,9 +74,8 @@ export const products: Product[] = [
     price: 7800,
     sizes: ["XS", "S", "M", "L"],
     images: [
-      img("bridal-lehenga-1", "Model wearing the ruby bridal lehenga with an embroidered veil"),
-      img("bridal-lehenga-2", "Detail of zardozi arches embroidered on the lehenga skirt"),
-      img("tulle-dupatta-2", "Full-length view of the lehenga with the dupatta draped over the head"),
+      img("rani-bridal-lehenga-1", "The Rani lehenga in ruby velvet, its gold zari embroidery fanned out"),
+      img("rani-bridal-lehenga-2", "The lehenga's embroidered panels from another angle"),
     ],
     summary: "Zardozi-embroidered silk velvet in heirloom ruby.",
     description:
@@ -88,7 +84,6 @@ export const products: Product[] = [
     composition: "Silk velvet 100%. Embroidery: metallic zari, glass beads, sequins.",
     featured: 2,
     added: "2026-09-20",
-    filmFrame: 150,
   },
   {
     slug: "oversized-tailored-blazer",
@@ -98,9 +93,8 @@ export const products: Product[] = [
     price: 1650,
     sizes: APPAREL,
     images: [
-      img("tailored-blazer-1", "Model in the crimson oversized blazer worn with a sling bag"),
-      img("tailored-blazer-2", "Full look: crimson blazer over cargo shorts and platform trainers"),
-      img("luminous-tie-2", "The blazer worn over a matching shirt and luminous tie"),
+      img("oversized-tailored-blazer-1", "The Oversized Tailored Blazer in crimson gabardine, folded"),
+      img("oversized-tailored-blazer-2", "The folded blazer showing its collar and buttons"),
     ],
     summary: "Dropped shoulders, single-breasted, cut long.",
     description:
@@ -109,7 +103,6 @@ export const products: Product[] = [
     composition: "Wool gabardine 100%. Lining: cupro 100%.",
     featured: 3,
     added: "2026-08-30",
-    filmFrame: 128,
   },
   {
     slug: "heavyweight-boxy-tee",
@@ -119,8 +112,8 @@ export const products: Product[] = [
     price: 145,
     sizes: APPAREL,
     images: [
-      img("boxy-tee-1", "Model in the scarlet heavyweight boxy tee"),
-      img("boxy-tee-2", "Full look: boxy tee with cargo shorts, cap and platform trainers"),
+      img("heavyweight-boxy-tee-1", "Two Heavyweight Boxy Tees in scarlet, folded with the ribbed neck on top"),
+      img("heavyweight-boxy-tee-2", "The folded tees from the side, showing the weight of the jersey"),
     ],
     summary: "300gsm loopback jersey with a dropped shoulder.",
     description:
@@ -129,7 +122,6 @@ export const products: Product[] = [
     composition: "Organic cotton 100%.",
     featured: 4,
     added: "2026-09-02",
-    filmFrame: 106,
   },
   {
     slug: "utility-cargo-short",
@@ -139,8 +131,8 @@ export const products: Product[] = [
     price: 260,
     sizes: APPAREL,
     images: [
-      img("cargo-short-1", "Scarlet cargo shorts worn below the knee with red socks"),
-      img("cargo-short-2", "Full look with cargo shorts, boxy tee and sling bag"),
+      img("utility-cargo-short-1", "The Utility Cargo Short in scarlet twill, folded with its drawcords"),
+      img("utility-cargo-short-2", "The folded cargo shorts from the side"),
     ],
     summary: "Knee-length twill with bellowed cargo pockets.",
     description:
@@ -149,7 +141,6 @@ export const products: Product[] = [
     composition: "Cotton twill 100%.",
     featured: 9,
     added: "2026-09-02",
-    filmFrame: 107,
   },
   {
     slug: "wide-cargo-trouser",
@@ -159,8 +150,8 @@ export const products: Product[] = [
     price: 520,
     sizes: APPAREL,
     images: [
-      img("wide-cargo-trouser-1", "Crimson wide-leg cargo trousers falling over platform trainers"),
-      img("wide-cargo-trouser-2", "Full look: wide cargo trousers with the oversized blazer"),
+      img("wide-cargo-trouser-1", "The Wide Cargo Trouser in crimson, folded with the pressed crease on top"),
+      img("wide-cargo-trouser-2", "The folded trousers stacked, seen from the side"),
     ],
     summary: "A wide, full-length leg with tailored creases.",
     description:
@@ -169,7 +160,6 @@ export const products: Product[] = [
     composition: "Wool 64%, polyester 36%.",
     featured: 6,
     added: "2026-09-08",
-    filmFrame: 140,
   },
   {
     slug: "second-skin-bodysuit",
@@ -179,8 +169,8 @@ export const products: Product[] = [
     price: 340,
     sizes: APPAREL,
     images: [
-      img("second-skin-1", "The figure from the film in a seamless cherry-red bodysuit"),
-      img("second-skin-2", "The cherry bodysuit walking beside the model in the white gown"),
+      img("second-skin-bodysuit-1", "The Second Skin Bodysuit in cherry jersey, laid in soft folds"),
+      img("second-skin-bodysuit-2", "The bodysuit's matte jersey from another angle"),
     ],
     summary: "Seamless, head-to-toe, the colour of the film.",
     description:
@@ -189,7 +179,6 @@ export const products: Product[] = [
     composition: "Polyamide 76%, elastane 24%.",
     featured: 12,
     added: "2026-08-21",
-    filmFrame: 30,
   },
   {
     slug: "platform-trainer",
@@ -199,8 +188,8 @@ export const products: Product[] = [
     price: 690,
     sizes: ["EU 36", "EU 37", "EU 38", "EU 39", "EU 40", "EU 41", "EU 42", "EU 43", "EU 44", "EU 45"],
     images: [
-      img("platform-trainer-1", "Cherry platform trainers worn with red ribbed socks"),
-      img("platform-trainer-2", "Platform trainers under cargo shorts with hanging drawcords"),
+      img("platform-trainer-1", "The Platform Trainer in cherry leather"),
+      img("platform-trainer-2", "The Platform Trainer from the toe"),
     ],
     summary: "A sculpted 5cm sole in tonal leather and mesh.",
     description:
@@ -209,7 +198,6 @@ export const products: Product[] = [
     composition: "Upper: calf leather 60%, polyester mesh 40%. Sole: rubber.",
     featured: 5,
     added: "2026-09-15",
-    filmFrame: 106,
   },
   {
     slug: "ribbed-sport-sock",
@@ -219,8 +207,8 @@ export const products: Product[] = [
     price: 35,
     sizes: ["S", "M", "L"],
     images: [
-      img("cargo-short-1", "Scarlet ribbed sport socks worn pulled up under cargo shorts"),
-      img("platform-trainer-1", "The socks worn with the Platform Trainer"),
+      img("ribbed-sport-sock-1", "A rolled pair of Ribbed Sport Socks in scarlet"),
+      img("ribbed-sport-sock-2", "The rolled socks from another angle"),
     ],
     summary: "Thick-ribbed cotton, worn pulled up.",
     description:
@@ -229,7 +217,6 @@ export const products: Product[] = [
     composition: "Combed cotton 80%, polyamide 17%, elastane 3%.",
     featured: 20,
     added: "2026-09-15",
-    filmFrame: 107,
   },
   {
     slug: "messenger-sling",
@@ -239,8 +226,8 @@ export const products: Product[] = [
     price: 890,
     sizes: ONE,
     images: [
-      img("messenger-sling-1", "Oxblood leather messenger sling worn across the body"),
-      img("messenger-sling-2", "The messenger sling worn over the crimson blazer"),
+      img("messenger-sling-1", "The Messenger Sling in oxblood leather with its webbing strap"),
+      img("messenger-sling-2", "The Messenger Sling's buckled flap"),
     ],
     summary: "Full-grain leather with an adjustable webbing strap.",
     description:
@@ -249,7 +236,6 @@ export const products: Product[] = [
     composition: "Full-grain calf leather. Lining: cotton canvas.",
     featured: 7,
     added: "2026-08-28",
-    filmFrame: 106,
   },
   {
     slug: "top-handle-mini-bag",
@@ -259,8 +245,8 @@ export const products: Product[] = [
     price: 1250,
     sizes: ONE,
     images: [
-      img("top-handle-bag-1", "Garnet top-handle mini bag held at the hip"),
-      img("top-handle-bag-2", "The mini bag carried with the Filament Gown"),
+      img("top-handle-mini-bag-1", "The Top-Handle Mini Bag in garnet leather"),
+      img("top-handle-mini-bag-2", "The mini bag's buckle strap and clasp"),
     ],
     summary: "Structured leather with a polished buckle strap.",
     description:
@@ -269,7 +255,6 @@ export const products: Product[] = [
     composition: "Smooth calf leather. Lining: suede.",
     featured: 10,
     added: "2026-09-12",
-    filmFrame: 93,
   },
   {
     slug: "wide-brim-raffia-hat",
@@ -279,8 +264,8 @@ export const products: Product[] = [
     price: 420,
     sizes: ["S", "M", "L"],
     images: [
-      img("brim-hat-1", "Model in the crimson wide-brim raffia hat"),
-      img("brim-hat-2", "The wide-brim hat worn with the Filament Gown"),
+      img("wide-brim-raffia-hat-1", "The Wide-Brim Raffia Hat in crimson"),
+      img("wide-brim-raffia-hat-2", "The hat's woven brim and grosgrain band"),
     ],
     summary: "Hand-woven raffia with a frayed, unfinished brim.",
     description:
@@ -289,7 +274,6 @@ export const products: Product[] = [
     composition: "Raffia 100%. Band: cotton grosgrain.",
     featured: 8,
     added: "2026-09-12",
-    filmFrame: 92,
   },
   {
     slug: "six-panel-cap",
@@ -299,8 +283,8 @@ export const products: Product[] = [
     price: 95,
     sizes: ONE,
     images: [
-      img("six-panel-cap-1", "Model wearing the vermilion six-panel cap"),
-      img("six-panel-cap-2", "The cap worn with the boxy tee and sling"),
+      img("six-panel-cap-1", "The Six-Panel Cap in vermilion"),
+      img("six-panel-cap-2", "The cap from the back"),
     ],
     summary: "Brushed cotton with a curved peak.",
     description:
@@ -309,7 +293,6 @@ export const products: Product[] = [
     composition: "Cotton twill 100%. Strap: calf leather.",
     featured: 11,
     added: "2026-09-02",
-    filmFrame: 108,
   },
   {
     slug: "satin-tie",
@@ -319,8 +302,8 @@ export const products: Product[] = [
     price: 165,
     sizes: ONE,
     images: [
-      img("satin-tie-1", "Garnet satin tie worn with a matching shirt and blazer"),
-      img("tailored-blazer-1", "The satin tie as part of the full tailored look"),
+      img("satin-tie-1", "The Satin Tie in garnet, rolled"),
+      img("satin-tie-2", "The rolled tie and its blade tip"),
     ],
     summary: "Heavy silk satin, seven-fold construction.",
     description:
@@ -329,7 +312,6 @@ export const products: Product[] = [
     composition: "Silk 100%.",
     featured: 14,
     added: "2026-08-30",
-    filmFrame: 130,
   },
   {
     slug: "luminous-tie",
@@ -339,8 +321,8 @@ export const products: Product[] = [
     price: 240,
     sizes: ONE,
     images: [
-      img("luminous-tie-1", "Vermilion luminous tie worn with the crimson blazer"),
-      img("luminous-tie-2", "The luminous tie as part of the full tailored look"),
+      img("luminous-tie-1", "The Luminous Tie in vermilion, rolled"),
+      img("luminous-tie-2", "The rolled Luminous Tie from another angle"),
     ],
     summary: "Satin edged with a fine reflective piping.",
     description:
@@ -349,7 +331,6 @@ export const products: Product[] = [
     composition: "Silk 92%, reflective polyester piping 8%.",
     featured: 13,
     added: "2026-09-08",
-    filmFrame: 140,
   },
   {
     slug: "embroidered-tulle-dupatta",
@@ -359,8 +340,8 @@ export const products: Product[] = [
     price: 680,
     sizes: ONE,
     images: [
-      img("tulle-dupatta-1", "Ruby tulle dupatta draped over the head with an embroidered border"),
-      img("tulle-dupatta-2", "The dupatta worn with the Rani bridal lehenga"),
+      img("embroidered-tulle-dupatta-1", "The Embroidered Tulle Dupatta in ruby, its gold border along the edge"),
+      img("embroidered-tulle-dupatta-2", "The dupatta's scattered sequins and border"),
     ],
     summary: "Sheer tulle veil with a hand-embroidered border.",
     description:
@@ -369,7 +350,6 @@ export const products: Product[] = [
     composition: "Silk tulle 100%. Embroidery: zari and sequins.",
     featured: 15,
     added: "2026-09-20",
-    filmFrame: 147,
   },
   {
     slug: "ember-candle",
@@ -451,51 +431,29 @@ export const products: Product[] = [
 
 export const productBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>;
 
-/** Editorial campaign chapters, in the order they appear in the film. */
+/** The five chapters of the campaign film, in order (told in words on the Story page). */
 export const chapters = [
-  {
-    id: "the-figure",
-    numeral: "I",
-    title: "The Figure",
-    copy: "Something red steps out from behind the wall. It doesn't ask, it arrives.",
-    frame: 34,
-    shopHref: "/product/second-skin-bodysuit",
-    shopLabel: "Shop the bodysuit",
-  },
-  {
-    id: "the-thread",
-    numeral: "II",
-    title: "The Thread",
-    copy: "Red threads cover the white gown and weave themselves into something new.",
-    frame: 90,
-    shopHref: "/product/filament-gown",
-    shopLabel: "Shop the Filament Gown",
-  },
-  {
-    id: "the-street",
-    numeral: "III",
-    title: "The Street",
-    copy: "Heavy cotton and long cargos, with the gaze still glowing.",
-    frame: 110,
-    shopHref: "/shop?category=streetwear",
-    shopLabel: "Shop streetwear",
-  },
-  {
-    id: "the-suit",
-    numeral: "IV",
-    title: "The Suit",
-    copy: "Crimson tailoring, cut wide. The tie catches the light.",
-    frame: 140,
-    shopHref: "/shop?shade=crimson",
-    shopLabel: "Shop crimson",
-  },
-  {
-    id: "the-heirloom",
-    numeral: "V",
-    title: "The Heirloom",
-    copy: "It ends in ruby: velvet, gold thread and a veil.",
-    frame: 148,
-    shopHref: "/product/rani-bridal-lehenga",
-    shopLabel: "Shop the Rani lehenga",
-  },
+  { id: "the-figure", numeral: "I", title: "The Figure", copy: "Something red steps out from behind the wall. It doesn't ask, it arrives." },
+  { id: "the-thread", numeral: "II", title: "The Thread", copy: "Red threads cover the white gown and weave themselves into something new." },
+  { id: "the-street", numeral: "III", title: "The Street", copy: "Heavy cotton and long cargos, with the gaze still glowing." },
+  { id: "the-suit", numeral: "IV", title: "The Suit", copy: "Crimson tailoring, cut wide. The tie catches the light." },
+  { id: "the-heirloom", numeral: "V", title: "The Heirloom", copy: "It ends in ruby: velvet, gold thread and a veil. Then one word, and one letter." },
 ] as const;
+
+/** Home-page editorial: one wide story and four entry points into the collection. */
+export const edit = {
+  lead: {
+    eyebrow: "The Crimson Edit",
+    title: "Made to be kept",
+    copy: "Leather, lacquer and raffia, all dyed to the same crimson. Every material we use answers to one of our seven reds.",
+    image: { src: "/editorial/edit-crimson.jpg", alt: "A crimson top-handle bag, fragrance and wide-brim hat arranged in the red studio" },
+    href: "/shop?shade=crimson",
+    cta: "Shop crimson",
+  },
+  cards: [
+    { title: "Tailoring", copy: "Cut wide, finished by hand.", slug: "oversized-tailored-blazer", href: "/shop?shade=crimson", cta: "Shop crimson" },
+    { title: "Leather", copy: "Bags in garnet and oxblood.", slug: "top-handle-mini-bag", href: "/shop?category=bags", cta: "Shop bags" },
+    { title: "Ceremony", copy: "Velvet, zari and tulle.", slug: "rani-bridal-lehenga", href: "/product/rani-bridal-lehenga", cta: "Shop the Rani lehenga" },
+    { title: "Objects", copy: "For a red interior.", slug: "ember-candle", href: "/shop?category=lifestyle", cta: "Shop lifestyle" },
+  ],
+} as const;

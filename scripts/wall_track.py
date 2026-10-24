@@ -1,6 +1,9 @@
 """Measures the left wall's per-frame horizontal drift and writes src/lib/hero/wall-track.ts.
 
-Usage: python3 scripts/wall_track.py <dir-with-original-frames> src/lib/hero/wall-track.ts
+Frames 1-144 come from the original film; 145-150 and 151-179 are the two supplied stills
+(lehenga, OBSESSED), which are framed slightly differently, so they get their own offset.
+
+Usage: python3 scripts/wall_track.py <film-frames-dir> <lehenga-still> <obsessed-still> src/lib/hero/wall-track.ts
 """
 import os
 import re
@@ -9,13 +12,12 @@ import sys
 import numpy as np
 from PIL import Image
 
-src, out = sys.argv[1], sys.argv[2]
-files = sorted(os.listdir(src), key=lambda s: int(re.findall(r"\d+", s)[0]))
-vals = []
-for f in files:
-    im = np.array(Image.open(os.path.join(src, f)).convert("L")).astype(float)
-    if im.shape[1] == 1920:  # frame 180: drop the white export strips
-        im = im[7:, :1906]
+frames_dir, lehenga, obsessed, out = sys.argv[1:5]
+FILM_FRAMES = 144
+
+
+def pillar_edge(path):
+    im = np.array(Image.open(path).convert("L")).astype(float)
     h, w = im.shape
     edges = []
     for r in (0.08, 0.12, 0.16, 0.6, 0.7):
@@ -23,26 +25,36 @@ for f in files:
         row = im[y - 2 : y + 3, : int(0.35 * w)].mean(0)
         g = np.convolve(np.diff(row), np.ones(3), "same")
         edges.append((int(np.argmin(g[int(0.15 * w) :])) + int(0.15 * w)) / w)
-    vals.append(float(np.median(edges)))
+    return float(np.median(edges))
 
-v = np.array(vals)
+
+files = sorted(os.listdir(frames_dir), key=lambda s: int(re.findall(r"\d+", s)[0]))[:FILM_FRAMES]
+v = np.array([pillar_edge(os.path.join(frames_dir, f)) for f in files])
 n = len(v)
 med = np.array([np.median(v[max(0, i - 20) : i + 21]) for i in range(n)])
 bad = np.abs(v - med) > 0.002  # frames where the red figure occludes the wall edge
 idx = np.arange(n)
 v[bad] = np.interp(idx[bad], idx[~bad], v[~bad])
 smooth = np.convolve(np.pad(v, 3, mode="edge"), np.ones(7) / 7, "valid")
-off = smooth - smooth[0]
+base = smooth[0]
+film = smooth - base
+still_a = pillar_edge(lehenga) - base
+still_b = pillar_edge(obsessed) - base
+values = list(film) + [still_a] * 6 + [still_b] * 29
 
 lines = [
     "/**",
     " * Horizontal drift of the left wall (pillar edge) per frame, as a fraction of frame width,",
-    " * measured from the supplied frames relative to frame 1. Used to keep the wall typography",
-    " * locked to the wall while the camera settles slightly during the film.",
+    " * measured relative to frame 1: frames 1–144 from the film, 145–150 and 151–179 from the two",
+    " * stills. Keeps the wall typography locked to the wall at every frame.",
     " */",
     "export const WALL_DRIFT: readonly number[] = [",
 ]
-for i in range(0, n, 10):
-    lines.append("  " + ", ".join("%.4f" % x for x in off[i : i + 10]) + ",")
+for i in range(0, len(values), 10):
+    lines.append("  " + ", ".join("%.4f" % x for x in values[i : i + 10]) + ",")
 lines.append("];")
+lines.append("")
+lines.append("/** Drift for the closing studio shot, which shares the OBSESSED still's framing. */")
+lines.append("export const STUDIO_DRIFT = %.4f;" % still_b)
 open(out, "w").write("\n".join(lines) + "\n")
+print("stills:", round(still_a, 4), round(still_b, 4))

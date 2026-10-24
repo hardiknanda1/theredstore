@@ -18,31 +18,38 @@ Set `NEXT_PUBLIC_SITE_URL` in production so social-image URLs resolve to the rea
 | Path | What it holds |
 | --- | --- |
 | `src/config/site.ts` | Brand name, navigation, CTA, contact details, currency, shipping rules |
-| `src/data/products.ts` | The sample catalogue, categories and campaign chapters (replace with a real feed) |
+| `src/data/products.ts` | The sample catalogue, categories, film chapters and home-page edit (replace with a real feed) |
 | `src/data/shades.ts` | The seven shades of the Red Spectrum, with hex/RGB values and copy |
-| `src/lib/hero/` | Film timeline, layout maths, frame loader and the measured wall-drift track |
+| `src/lib/hero/` | Hero timeline, layout maths, asset loader and the measured wall-drift track |
 | `src/lib/catalog.ts` | Filtering, sorting and URL (de)serialisation for the shop |
 | `src/lib/cart-store.ts` | Cart store (localStorage-backed, synced across tabs) |
 | `src/components/` | Hero, home sections, shop, product, cart, checkout, contact, layout |
 | `src/app/api/` | `newsletter`, `contact` and `checkout` endpoints (validation only; see below) |
-| `public/frames/` | The film: `desktop/` holds the 180 original JPEGs, `mobile/` 960px WebP copies |
-| `public/products/` | Product imagery |
-| `scripts/` | Python scripts that generated the product crops, lifestyle stills and wall-drift track from the source frames |
+| `public/frames/` | Film frames 1–144: `desktop/` holds the original JPEGs, `mobile/` 960px WebP copies |
+| `public/hero/` | The lehenga and OBSESSED stills, the empty-studio plate (desktop and mobile) and the E sprite |
+| `public/products/`, `public/editorial/` | Product and editorial imagery (studio stills; see below) |
+| `scripts/` | Python scripts that generate the studio stills, the hero plate and E sprite, and the wall-drift track |
 
 ## The hero film
 
-- The 180 supplied frames are sorted numerically and played in order. The section is pinned for 350vh. Scroll position maps onto the frames, then the final frame holds for 20 more frame-units while the lockup appears. Scrolling up plays the film backwards.
-- Frames are loaded coarse-to-fine: frame 1, then frame 180, then every 32nd, 16th … frame. Each is decoded with `img.decode()` and kept in memory, and drawing happens in `requestAnimationFrame` only while the hero is on screen. Until a frame is ready, the nearest decoded frame stands in.
-- The canvas is sized for the device pixel ratio (capped at 2×) and redrawn by a `ResizeObserver`. Wide screens get a cover crop. On portrait screens the film scales down just enough to keep the wall, the figure, the model and the lockup in view, and the space around it is filled with the studio's wall and floor tones.
-- Small screens and Save-Data connections load the 3 MB WebP set instead of the 15 MB originals.
-- **Wall typography.** "Make the RED statement" is drawn in film coordinates on the left wall for frames 1–179. The camera drifts by up to ~4px across the film. That drift was measured per frame (`wall-track.ts`) and is compensated, so the type stays fixed to the wall.
-- **Final lockup.** Frame 180 was exported at 1920×1080 with white strips on the top and right edges; these are cropped at draw time and the frame is otherwise untouched. The white E is the film's own pixels. The R and D are set in **PT Serif**, which matched the E's glyph shape with an IoU of 0.96 against 50 candidate serifs. They are sized from the E's measured cap height and placed on its baseline. THE and COMPANY are centred above and below.
+| Frames | What plays |
+| --- | --- |
+| 1–144 | The original film frames, unchanged |
+| 145–150 | The lehenga still (cross-fades in from frame 144) |
+| 151–179 | The OBSESSED still (the word fades in over two frames) |
+| then | The model and OBSESSED dissolve into the empty studio; the centre E stays exactly where it was |
+| then | R and D slide in beside the E, then THE and COMPANY appear, and the composition holds |
+
+- The section is pinned for 350vh and scroll maps continuously onto that timeline, so scrolling up plays it backwards.
+- **Empty studio.** The plate the model dissolves into is rebuilt from the OBSESSED still itself (`scripts/hero_plate.py`): each row behind her is interpolated across from the wall and floor on either side, and the wall texture is restored from untouched areas. The centre E is cut out as an alpha sprite and drawn on top throughout the dissolve, so it never moves or changes.
+- **Lockup type.** The R and D are set in **Noto Serif Display Bold**, the closest match to the OBSESSED E among 30+ Didone and display serifs. They are sized from that E's cap height, sit on its baseline, and keep OBSESSED's letter spacing. The E stays white, R and D are crimson, and THE and COMPANY are off-white.
+- **Wall typography.** "Make the RED statement" is drawn on the left wall for the whole hero. The camera drifts slightly during the film, and the stills are framed about 1.4% differently. Both were measured (`wall-track.ts`) and compensated, so the type stays fixed to the wall.
+- **Loading.** Frame 1 loads first, then the stills, then the rest of the film coarse-to-fine (every 32nd, 16th … frame). Everything is decoded with `img.decode()` and drawn in `requestAnimationFrame` only while the hero is on screen. Small screens and Save-Data connections get 960px WebP copies.
+- The canvas is sized for the device pixel ratio (capped at 2×) and redrawn on resize. Portrait screens scale the film down just enough to keep the wall, the figure, the model and the lockup in view.
 
 ## Imagery
 
-- Apparel, streetwear, footwear, bag and accessory images are crops of the looks in the campaign film, so every product shown actually appears in it.
-- The four lifestyle objects (candle, vessel, fragrance, mug) are studio still-life renders made for this project.
-- To use real photography, replace the files in `public/products/` or point `images` in `src/data/products.ts` at your own assets.
+None of the hero's imagery is used elsewhere on the site. Product and editorial images are **studio still renders** (`scripts/studio_render.py`): objects, folded garments and draped cloth in each product's shade, lit like a single studio shoot. They stand in until photography is available. To swap them, drop photos into `public/products/` and `public/editorial/` under the same file names, or point `images` in `src/data/products.ts` at your own assets.
 
 ## Commerce
 

@@ -1,12 +1,9 @@
-import { FRAME_COUNT, frameUrl, type FrameSet } from "./sequence";
+import { E_SPRITE_URL, FILM_FRAMES, frameUrl, stillUrl, type FrameSet, type HeroAssets, type StillId } from "./sequence";
 
-/**
- * Coarse-to-fine load order: the first and last frames, then every 32nd, 16th … frame.
- * Any scroll position soon has a nearby frame to show, and detail fills in progressively.
- */
-function loadOrder(count: number): number[] {
-  const order: number[] = [0, count - 1];
-  const seen = new Set(order);
+/** Coarse-to-fine order: every 32nd, 16th … film frame, so any scroll position soon has a neighbour. */
+function filmOrder(count: number): number[] {
+  const order: number[] = [];
+  const seen = new Set<number>([0]);
   for (let stride = 32; stride >= 1; stride /= 2) {
     for (let i = 0; i < count; i += stride) {
       if (!seen.has(i)) {
@@ -18,69 +15,75 @@ function loadOrder(count: number): number[] {
   return order;
 }
 
+const STILLS: StillId[] = ["lehenga", "obsessed", "studio"];
+
 /**
- * Loads and decodes the film frames off the main thread (img.decode), a few at a time,
- * and keeps the decoded images for instant drawing.
+ * Loads and decodes the hero imagery (img.decode keeps decoding off the main thread), a few
+ * at a time, and keeps the decoded images for instant drawing. Frame 1 loads first, then the
+ * three stills and the E sprite, then the rest of the film coarse-to-fine.
  */
-export class FrameCache {
-  readonly frames: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
+export class HeroAssetCache implements HeroAssets {
+  private readonly frames: (HTMLImageElement | null)[] = new Array(FILM_FRAMES).fill(null);
+  private readonly stills = new Map<StillId, HTMLImageElement>();
+  eSprite: HTMLImageElement | null = null;
   loaded = 0;
+  readonly total = FILM_FRAMES + STILLS.length + 1;
   private disposed = false;
   private pending = new Set<HTMLImageElement>();
 
   constructor(
     private readonly set: FrameSet,
-    private readonly onFrame: (index: number) => void,
+    private readonly onLoad: () => void,
     private readonly concurrency = 6,
   ) {}
 
   start() {
-    const queue = loadOrder(FRAME_COUNT);
+    const jobs: (() => Promise<void>)[] = [
+      ...STILLS.map((id) => () => this.load(stillUrl(this.set, id), (img) => this.stills.set(id, img))),
+      () => this.load(E_SPRITE_URL, (img) => (this.eSprite = img)),
+      ...filmOrder(FILM_FRAMES).map((i) => () => this.load(frameUrl(this.set, i), (img) => (this.frames[i] = img))),
+    ];
     // Frame 1 alone first, so the opening picture appears as early as possible.
-    const first = queue.shift()!;
-    this.load(first).finally(() => {
-      for (let i = 0; i < this.concurrency; i++) void this.worker(queue);
+    this.load(frameUrl(this.set, 0), (img) => (this.frames[0] = img)).finally(() => {
+      for (let i = 0; i < this.concurrency; i++) void this.worker(jobs);
     });
   }
 
-  private async worker(queue: number[]) {
-    while (!this.disposed && queue.length) {
-      await this.load(queue.shift()!);
-    }
+  private async worker(jobs: (() => Promise<void>)[]) {
+    while (!this.disposed && jobs.length) await jobs.shift()!();
   }
 
-  private async load(index: number) {
+  private async load(url: string, store: (img: HTMLImageElement) => void) {
     if (this.disposed) return;
     const img = new Image();
     img.decoding = "async";
-    img.src = frameUrl(this.set, index);
+    img.src = url;
     this.pending.add(img);
     try {
       await img.decode();
       if (this.disposed) return;
-      this.frames[index] = img;
+      store(img);
       this.loaded++;
-      this.onFrame(index);
+      this.onLoad();
     } catch {
-      // A failed frame is skipped; nearestLoaded() bridges the gap with a neighbour.
+      // A failed image is skipped; film() bridges gaps with a neighbouring frame.
     } finally {
       this.pending.delete(img);
     }
   }
 
-  /** The requested frame if it is ready, otherwise the closest decoded frame. */
-  nearestLoaded(index: number): { img: HTMLImageElement; index: number } | null {
-    // The final title frame is never borrowed to stand in for a film frame.
-    const last = FRAME_COUNT - 1;
-    for (let d = 0; d < FRAME_COUNT; d++) {
-      const i = index - d;
-      const j = index + d;
-      const a = this.frames[i];
-      if (a && (i !== last || index === last)) return { img: a, index: i };
-      const b = this.frames[j];
-      if (b && (j !== last || index === last)) return { img: b, index: j };
+  film(index: number): HTMLImageElement | null {
+    for (let d = 0; d < FILM_FRAMES; d++) {
+      const a = this.frames[index - d];
+      if (a) return a;
+      const b = this.frames[index + d];
+      if (b) return b;
     }
     return null;
+  }
+
+  still(id: StillId): HTMLImageElement | null {
+    return this.stills.get(id) ?? null;
   }
 
   dispose() {
@@ -88,5 +91,7 @@ export class FrameCache {
     for (const img of this.pending) img.src = "";
     this.pending.clear();
     this.frames.fill(null);
+    this.stills.clear();
+    this.eSprite = null;
   }
 }

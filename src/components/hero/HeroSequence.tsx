@@ -1,21 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ptSerif } from "@/lib/fonts";
-import { FrameCache } from "@/lib/hero/frame-cache";
+import { notoSerifDisplay, ptSerif } from "@/lib/fonts";
+import { HeroAssetCache } from "@/lib/hero/frame-cache";
 import {
-  FRAME_COUNT,
+  FILM_END,
   PIN_VH,
   TIMELINE_LENGTH,
   computeLayout,
+  safeRightFor,
   drawLockup,
+  drawScene,
   drawWallText,
   featherEdges,
-  frameIndexFor,
   paintBackdrop,
-  sourceRect,
   type FrameSet,
-  type Rect,
 } from "@/lib/hero/sequence";
 import { siteConfig } from "@/config/site";
 
@@ -30,16 +29,16 @@ function pickFrameSet(): FrameSet {
 
 /**
  * Scroll-scrubbed campaign film. The section is PIN_VH taller than the viewport; while it
- * scrolls past, a sticky canvas maps scroll progress onto the 180 supplied frames, holds the
- * final frame for HOLD_FRAMES, and draws the wall typography and THE RED COMPANY lockup.
+ * scrolls past, a sticky canvas maps scroll progress onto the film (frames 1–144), the two
+ * stills (145–150, 151–179), the dissolve to the E, and THE RED COMPANY lockup. The wall
+ * typography is drawn throughout. See the timeline in lib/hero/sequence.ts.
  */
 export function HeroSequence() {
   const sectionRef = useRef<HTMLElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [loaded, setLoaded] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [firstFrame, setFirstFrame] = useState(false);
-  const [atStart, setAtStart] = useState(true);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -50,16 +49,14 @@ export function HeroSequence() {
     if (!ctx) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const family = ptSerif.style.fontFamily;
+    const wallFamily = ptSerif.style.fontFamily;
+    const lockupFamily = notoSerifDisplay.style.fontFamily;
     let vw = 0;
     let vh = 0;
-    let layout: Rect = { x: 0, y: 0, w: 0, h: 0 };
     let dirty = true;
     let raf = 0;
     let running = false;
     let lastT = -1;
-    let lastSource = -1;
-    let startFlag = true;
 
     const readTarget = () => {
       const total = section.offsetHeight - sticky.offsetHeight;
@@ -69,12 +66,11 @@ export function HeroSequence() {
     };
     let t = readTarget();
 
-    const cache = new FrameCache(pickFrameSet(), (index) => {
-      setLoaded(cache.loaded);
-      if (index === 0) setFirstFrame(true);
-      // Redraw if the newly decoded frame is closer to the one we should be showing.
-      const want = frameIndexFor(t);
-      if (Math.abs(index - want) < Math.abs(lastSource - want) || lastSource < 0) dirty = true;
+    const cache = new HeroAssetCache(pickFrameSet(), () => {
+      setProgress(cache.loaded / cache.total);
+      if (cache.film(0)) setFirstFrame(true);
+      // A newly decoded image may be closer to what this position should show.
+      dirty = true;
       if (!running) draw();
     });
 
@@ -86,29 +82,20 @@ export function HeroSequence() {
       canvas.width = Math.round(vw * dpr);
       canvas.height = Math.round(vh * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      layout = computeLayout(vw, vh);
       dirty = true;
       draw();
     };
 
     const draw = () => {
       if (!vw || !vh) return;
-      const index = frameIndexFor(t);
-      const found = cache.nearestLoaded(index);
+      const layout = computeLayout(vw, vh, safeRightFor(t));
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       paintBackdrop(ctx, vw, vh, layout);
-      if (found) {
-        const s = sourceRect(found.index, found.img);
-        ctx.drawImage(found.img, s.sx, s.sy, s.sw, s.sh, layout.x, layout.y, layout.w, layout.h);
-        lastSource = found.index;
-      }
+      const drift = drawScene(ctx, layout, t, cache);
       featherEdges(ctx, vw, vh, layout);
-      if (index < FRAME_COUNT - 1) {
-        drawWallText(ctx, layout, index, family);
-      } else if (found?.index === FRAME_COUNT - 1) {
-        drawLockup(ctx, layout, t, family);
-      }
+      drawWallText(ctx, layout, drift, wallFamily);
+      if (t > FILM_END) drawLockup(ctx, layout, t, lockupFamily);
       lastT = t;
       dirty = false;
     };
@@ -118,11 +105,6 @@ export function HeroSequence() {
       const diff = target - t;
       t = reduceMotion || Math.abs(diff) < 0.02 ? target : t + diff * EASE;
       if (dirty || t !== lastT) draw();
-      const nowStart = target < 1.5;
-      if (nowStart !== startFlag) {
-        startFlag = nowStart;
-        setAtStart(nowStart);
-      }
       if (running) raf = requestAnimationFrame(tick);
     };
 
@@ -144,10 +126,12 @@ export function HeroSequence() {
     io.observe(section);
 
     cache.start();
-    // Repaint once the display face is ready so the wall type and lockup use PT Serif.
+    // Repaint once the faces are ready so the wall type and lockup never use a fallback.
     Promise.all([
-      document.fonts.load(`400 48px ${family}`),
-      document.fonts.load(`italic 400 48px ${family}`),
+      document.fonts.load(`400 48px ${wallFamily}`),
+      document.fonts.load(`italic 400 48px ${wallFamily}`),
+      document.fonts.load(`700 48px ${lockupFamily}`),
+      document.fonts.load(`400 48px ${lockupFamily}`),
     ])
       .then(() => {
         dirty = true;
@@ -163,7 +147,7 @@ export function HeroSequence() {
     };
   }, []);
 
-  const pct = Math.round((loaded / FRAME_COUNT) * 100);
+  const pct = Math.round(progress * 100);
 
   return (
     <section
@@ -180,7 +164,7 @@ export function HeroSequence() {
         <canvas
           ref={canvasRef}
           role="img"
-          aria-label="A model in a white gown stands in a deep red studio. A red figure emerges from behind the wall, merges into her, and her look changes through a red thread gown, streetwear, tailoring and a bridal lehenga, ending on the words The Red Company."
+          aria-label="A model in a white gown stands in a deep red studio. A red figure emerges from behind the wall, merges into her, and her look changes through a red thread gown, streetwear, tailoring and a bridal lehenga. The word OBSESSED appears, then fades with her, leaving one E that becomes The Red Company."
           className="block h-full w-full"
         />
 
@@ -194,23 +178,13 @@ export function HeroSequence() {
           <span className="display text-4xl tracking-[0.3em] text-bone/80">RED</span>
         </div>
 
-        {/* Preload progress and scroll cue. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-4 pb-5 text-bone/70 md:px-10 md:pb-8">
+        {/* Preload progress. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-5 text-bone/70 md:px-10 md:pb-8">
           <span
             className={`eyebrow transition-opacity duration-700 ${pct < 100 ? "opacity-100" : "opacity-0"}`}
             aria-live="polite"
           >
             {pct < 100 ? `Loading film ${pct}%` : "Film ready"}
-          </span>
-          <span
-            className={`eyebrow flex items-center gap-3 transition-opacity duration-700 ${
-              atStart ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            Scroll
-            <span className="relative block h-8 w-px overflow-hidden bg-bone/20">
-              <span className="absolute inset-x-0 top-0 h-3 animate-[cue_2.2s_var(--ease-luxe)_infinite] bg-bone motion-reduce:animate-none" />
-            </span>
           </span>
         </div>
         <div

@@ -1,7 +1,7 @@
 /**
  * Horizontal drift of the left wall (pillar edge) per frame, as a fraction of frame width,
- * measured from the supplied frames relative to frame 1. Used to keep the wall typography
- * locked to the wall while the camera settles slightly during the film.
+ * measured relative to frame 1: frames 1–144 from the film, 145–150 and 151–179 from the two
+ * stills. Keeps the wall typography locked to the wall at every frame.
  */
 export const WALL_DRIFT: readonly number[] = [
   0.0000, 0.0002, 0.0003, 0.0004, 0.0006, 0.0007, 0.0006, 0.0005, 0.0004, 0.0004,
@@ -18,8 +18,11 @@ export const WALL_DRIFT: readonly number[] = [
   -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044,
   -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044,
   -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044,
-  -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044,
-  -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044,
-  -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044,
-  -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044, -0.0044,
+  -0.0044, -0.0044, -0.0044, -0.0044, -0.0138, -0.0138, -0.0138, -0.0138, -0.0138, -0.0138,
+  -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136,
+  -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136,
+  -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136, -0.0136,
 ];
+
+/** Drift for the closing studio shot, which shares the OBSESSED still's framing. */
+export const STUDIO_DRIFT = -0.0136;

@@ -79,13 +79,3 @@
 @utility hairline {
   border-color: color-mix(in oklab, currentColor 16%, transparent);
 }
-
-@keyframes cue {
-  0% {
-    transform: translateY(-100%);
-  }
-  60%,
-  100% {
-    transform: translateY(260%);
-  }
-}

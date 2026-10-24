@@ -1,37 +1,48 @@
-import { WALL_DRIFT } from "./wall-track";
+import { STUDIO_DRIFT, WALL_DRIFT } from "./wall-track";
 
-/** Number of frames in the supplied film (frame-0001 … frame-180, sorted numerically). */
-export const FRAME_COUNT = 180;
-/** Extra scroll, in frame units, during which the final frame is held for the title lockup. */
-export const HOLD_FRAMES = 20;
-export const TIMELINE_LENGTH = FRAME_COUNT + HOLD_FRAMES;
+/**
+ * Timeline of the hero, in frame units (one unit = one frame of scroll):
+ *
+ *   0 – 144   film frames 1–144, exactly as supplied
+ *   144 – 150 frames 145–150: the lehenga still (cross-faded in from frame 144)
+ *   150 – 179 frames 151–179: the OBSESSED still (the type fades in over two frames)
+ *   179 – 191 the model and OBSESSED dissolve into the empty studio; the centre E stays
+ *   189 – 207 R and D, then THE and COMPANY, form around the E
+ *   207 – 215 hold
+ */
+export const FILM_FRAMES = 144;
+export const LEHENGA_START = 144;
+export const OBSESSED_START = 150;
+export const FILM_END = 179;
+const DISSOLVE = [FILM_END, FILM_END + 12] as const;
+const RED_IN = [FILM_END + 10, FILM_END + 20] as const;
+const WORDS_IN = [FILM_END + 16, FILM_END + 28] as const;
+export const TIMELINE_LENGTH = FILM_END + 36;
 /** The hero stays pinned for this much scroll (in viewport heights). */
 export const PIN_VH = 350;
 
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
 export type FrameSet = "desktop" | "mobile";
+export type StillId = "lehenga" | "obsessed" | "studio";
 
 export function frameUrl(set: FrameSet, index: number): string {
   const n = String(index + 1).padStart(3, "0");
   return set === "desktop" ? `/frames/desktop/f${n}.jpg` : `/frames/mobile/f${n}.webp`;
 }
 
+export function stillUrl(set: FrameSet, id: StillId): string {
+  return `/hero/${set}/${id}.webp`;
+}
+
+/** The centre E of OBSESSED, cut out with an alpha mask so it can stay while the rest dissolves. */
+export const E_SPRITE_URL = "/hero/e-sprite.png";
+
 /** Aspect ratio of the film. */
 export const FILM_ASPECT = 16 / 9;
-
-/**
- * Frame 180 was exported at 1920×1080 with a 5px white strip along the top and an 11px
- * strip down the right edge (plus a pixel or two of compression ringing). We sample only the
- * clean picture area (as fractions, so the
- * same crop applies to the downsized mobile set).
- */
-export function sourceRect(index: number, img: HTMLImageElement) {
-  const w = img.naturalWidth;
-  const h = img.naturalHeight;
-  if (index === FRAME_COUNT - 1) {
-    return { sx: 0, sy: (h * 7) / 1080, sw: (w * 1906) / 1920, sh: (h * 1073) / 1080 };
-  }
-  return { sx: 0, sy: 0, sw: w, sh: h };
-}
 
 export interface Rect {
   x: number;
@@ -45,6 +56,8 @@ export interface Rect {
  * with its typography, the red figure's entrance, the model and the final lockup.
  */
 const SAFE = { left: 0.02, right: 0.64, top: 0.04, bottom: 0.95 };
+/** OBSESSED spans to 80% of the frame width, so the safe region widens before it appears. */
+const SAFE_RIGHT_OBSESSED = 0.82;
 const FOCUS_X = 0.45;
 const FOCUS_Y = 0.5;
 
@@ -53,10 +66,10 @@ const FOCUS_Y = 0.5;
  * full-bleed cover crop; narrow/portrait screens scale down just enough to keep the safe
  * region in view, and the remaining space is filled with the studio's wall and floor tones.
  */
-export function computeLayout(vw: number, vh: number): Rect {
+export function computeLayout(vw: number, vh: number, safeRight = SAFE.right): Rect {
   const coverH = Math.max(vh, vw / FILM_ASPECT);
   const fitH = Math.min(
-    vw / ((SAFE.right - SAFE.left) * FILM_ASPECT),
+    vw / ((safeRight - SAFE.left) * FILM_ASPECT),
     vh / (SAFE.bottom - SAFE.top),
   );
   const h = Math.min(coverH, fitH);
@@ -72,30 +85,30 @@ export function computeLayout(vw: number, vh: number): Rect {
   };
 
   return {
-    x: place(vw, w, FOCUS_X, SAFE.left, SAFE.right, 0.5),
+    x: place(vw, w, FOCUS_X, SAFE.left, safeRight, 0.5),
     y: place(vh, h, FOCUS_Y, SAFE.top, SAFE.bottom, 0.42),
     w,
     h,
   };
 }
 
+/**
+ * Right edge of the safe region at timeline position t: on narrow screens the picture eases
+ * back during the lehenga still so that the whole of OBSESSED (and later the lockup) fits.
+ * Wide screens are unaffected because their cover crop already shows it.
+ */
+export function safeRightFor(t: number) {
+  return SAFE.right + (SAFE_RIGHT_OBSESSED - SAFE.right) * smoothstep(OBSESSED_START - 3, OBSESSED_START + 0.5, t);
+}
+
 /** Studio tones used to extend the picture on screens narrower than the film. */
 export const STUDIO_TOP = "#3d0508";
 export const STUDIO_BOTTOM = "#9c151b";
 
-const smoothstep = (a: number, b: number, x: number) => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
 
-export interface DrawState {
-  /** Continuous timeline position in frame units: 0 … TIMELINE_LENGTH. */
-  t: number;
-  frameIndex: number;
-}
-
-export function frameIndexFor(t: number) {
-  return Math.min(FRAME_COUNT - 1, Math.max(0, Math.floor(t)));
+/** Index of the film frame (0-based) shown at timeline position t, within the original film. */
+export function filmIndexFor(t: number) {
+  return Math.min(FILM_FRAMES - 1, Math.max(0, Math.floor(t)));
 }
 
 export function paintBackdrop(ctx: CanvasRenderingContext2D, vw: number, vh: number, r: Rect) {
@@ -130,6 +143,69 @@ export function featherEdges(ctx: CanvasRenderingContext2D, vw: number, vh: numb
   }
 }
 
+export interface HeroAssets {
+  /** The requested film frame if decoded, otherwise the nearest decoded film frame. */
+  film(index: number): HTMLImageElement | null;
+  still(id: StillId): HTMLImageElement | null;
+  eSprite: HTMLImageElement | null;
+}
+
+function drawPicture(ctx: CanvasRenderingContext2D, img: HTMLImageElement | null, r: Rect, alpha = 1) {
+  if (!img || alpha <= 0) return false;
+  ctx.globalAlpha = Math.min(1, alpha);
+  ctx.drawImage(img, r.x, r.y, r.w, r.h);
+  ctx.globalAlpha = 1;
+  return true;
+}
+
+/**
+ * Paints the picture for timeline position t and returns the wall drift to use for the
+ * wall typography at that moment.
+ */
+export function drawScene(ctx: CanvasRenderingContext2D, r: Rect, t: number, a: HeroAssets): number {
+  const lehenga = a.still("lehenga");
+  const obsessed = a.still("obsessed");
+
+  if (t < LEHENGA_START) {
+    const index = filmIndexFor(t);
+    drawPicture(ctx, a.film(index), r);
+    return WALL_DRIFT[index] ?? 0;
+  }
+
+  if (t < OBSESSED_START) {
+    // Frame 145 cross-fades from the film's frame 144 into the lehenga still.
+    const mix = lehenga ? smoothstep(LEHENGA_START, LEHENGA_START + 1, t) : 0;
+    if (mix < 1) drawPicture(ctx, a.film(FILM_FRAMES - 1), r);
+    drawPicture(ctx, lehenga, r, mix);
+    const from = WALL_DRIFT[FILM_FRAMES - 1] ?? 0;
+    return from + ((WALL_DRIFT[LEHENGA_START] ?? from) - from) * mix;
+  }
+
+  if (t < FILM_END) {
+    // OBSESSED fades in over the first two frames of its still.
+    const mix = obsessed ? smoothstep(OBSESSED_START, OBSESSED_START + 2, t) : 0;
+    if (mix < 1 && !drawPicture(ctx, lehenga, r)) drawPicture(ctx, a.film(FILM_FRAMES - 1), r);
+    drawPicture(ctx, obsessed, r, mix);
+    return WALL_DRIFT[Math.min(Math.floor(t), FILM_END - 1)] ?? STUDIO_DRIFT;
+  }
+
+  // The model and OBSESSED dissolve into the empty studio; the centre E is held throughout.
+  const studio = a.still("studio");
+  const fade = studio ? smoothstep(DISSOLVE[0], DISSOLVE[1], t) : 0;
+  drawPicture(ctx, studio, r);
+  if (!drawPicture(ctx, obsessed, r, 1 - fade) && !studio) drawPicture(ctx, lehenga, r);
+  if (a.eSprite && obsessed) {
+    ctx.drawImage(
+      a.eSprite,
+      r.x + E_SPRITE.x * r.w,
+      r.y + E_SPRITE.y * r.h,
+      E_SPRITE.w * r.w,
+      E_SPRITE.h * r.h,
+    );
+  }
+  return STUDIO_DRIFT;
+}
+
 /** Draws text with manual tracking (canvas letterSpacing is not universally supported). */
 function fillTracked(
   ctx: CanvasRenderingContext2D,
@@ -151,17 +227,11 @@ function fillTracked(
 }
 
 /**
- * "Make the RED statement" set on the left wall (the pillar face) for frames 1–179.
+ * "Make the RED statement" set on the left wall (the pillar face) for the whole hero.
  * Coordinates are in film space and follow the measured wall drift, so the type stays
  * fixed to the wall at every frame and every viewport size.
  */
-export function drawWallText(
-  ctx: CanvasRenderingContext2D,
-  r: Rect,
-  frameIndex: number,
-  family: string,
-) {
-  const drift = WALL_DRIFT[frameIndex] ?? 0;
+export function drawWallText(ctx: CanvasRenderingContext2D, r: Rect, drift: number, family: string) {
   const x = r.x + (0.043 + drift) * r.w;
   const at = (ny: number) => r.y + ny * r.h;
   const small = r.h * 0.044;
@@ -185,75 +255,63 @@ export function drawWallText(
   ctx.restore();
 }
 
-/**
- * Ink box of the white serif "E" already present in frame 180, measured in pixels of the
- * cleaned 1906×1073 picture and expressed as fractions.
- */
-const E_BOX = {
-  left: 852 / 1906,
-  right: 956 / 1906,
-  top: 447 / 1073,
-  baseline: 596 / 1073,
-};
+/** OBSESSED still is 1671×941; the sprite and the E's ink box are measured in its pixels. */
+const STILL_W = 1671;
+const STILL_H = 941;
+const E_SPRITE = { x: 770 / STILL_W, y: 355 / STILL_H, w: 86 / STILL_W, h: 111 / STILL_H };
+const E_INK = { left: 779 / STILL_W, right: 846 / STILL_W, top: 365 / STILL_H, baseline: 456 / STILL_H };
+/** Ink gap between letters in OBSESSED, as a fraction of cap height (≈ 64px gaps at 91px caps). */
+const TRACKING = 0.7;
 
-export const LOCKUP_RED_COLOR = "#3b030a";
+export const LOCKUP_RED_COLOR = "#c1121f";
 export const LOCKUP_WORD_COLOR = "#f6ece4";
 
 /**
- * Final lockup: deep-red R and D drawn either side of the film's own E (which is left
- * untouched), with THE above and COMPANY below. Sizes are derived from the E's measured cap
- * height and PT Serif's own metrics so baseline, scale and spacing match.
+ * Final lockup around the E kept from OBSESSED: deep-red R and D set in the same Didone
+ * (Noto Serif Display Bold, matched to the E) with OBSESSED's letter spacing, then THE above
+ * and COMPANY below. Sizes come from the E's measured cap height.
  */
 export function drawLockup(ctx: CanvasRenderingContext2D, r: Rect, t: number, family: string) {
-  const reveal = smoothstep(FRAME_COUNT + 0.5, FRAME_COUNT + 8, t);
-  const words = smoothstep(FRAME_COUNT + 5, FRAME_COUNT + 15, t);
+  const reveal = smoothstep(RED_IN[0], RED_IN[1], t);
+  const words = smoothstep(WORDS_IN[0], WORDS_IN[1], t);
   if (reveal <= 0 && words <= 0) return;
 
-  const capPx = (E_BOX.baseline - E_BOX.top) * r.h;
-  const inkLeft = r.x + E_BOX.left * r.w;
-  const inkRight = r.x + E_BOX.right * r.w;
-  const baseline = r.y + E_BOX.baseline * r.h;
+  const capPx = (E_INK.baseline - E_INK.top) * r.h;
+  const inkLeft = r.x + E_INK.left * r.w;
+  const inkRight = r.x + E_INK.right * r.w;
+  const baseline = r.y + E_INK.baseline * r.h;
 
   ctx.save();
   ctx.textBaseline = "alphabetic";
-  ctx.font = `400 100px ${family}`;
+  ctx.font = `700 100px ${family}`;
   const capRatio = ctx.measureText("E").actualBoundingBoxAscent / 100 || 0.7;
   const size = capPx / capRatio;
-  ctx.font = `400 ${size}px ${family}`;
+  ctx.font = `700 ${size}px ${family}`;
 
-  const mE = ctx.measureText("E");
-  // Fit the measured E ink width to the film's E so spacing is derived from the same scale.
-  const inkW = mE.actualBoundingBoxLeft + mE.actualBoundingBoxRight;
-  const xScale = inkW > 0 ? (inkRight - inkLeft) / inkW : 1;
-  const originE = inkLeft + mE.actualBoundingBoxLeft * xScale;
-  const advE = mE.width * xScale;
-  const advR = (ctx.measureText("RE").width - mE.width) * xScale;
-  const advD = ctx.measureText("D").width * xScale;
-  const kernED = (ctx.measureText("ED").width - mE.width - ctx.measureText("D").width) * xScale;
-
-  // A touch of display tracking so the serifs of R and E do not collide.
-  const track = capPx * 0.035;
-  const glide = (1 - reveal) * capPx * 0.08;
-  ctx.globalAlpha = reveal;
-  ctx.fillStyle = LOCKUP_RED_COLOR;
-  ctx.fillText("R", originE - advR - track - glide, baseline);
-  ctx.fillText("D", originE + advE + kernED + track + glide, baseline);
-
-  // THE / COMPANY, centred on the full RED word.
+  const gap = capPx * TRACKING;
+  const glide = (1 - reveal) * capPx * 0.18;
   const mR = ctx.measureText("R");
   const mD = ctx.measureText("D");
-  const left = originE - advR - track - mR.actualBoundingBoxLeft;
-  const right = originE + advE + kernED + track + Math.min(advD, mD.actualBoundingBoxRight);
+  const rRight = inkLeft - gap;
+  const dLeft = inkRight + gap;
+  ctx.globalAlpha = reveal;
+  ctx.fillStyle = LOCKUP_RED_COLOR;
+  ctx.fillText("R", rRight - mR.actualBoundingBoxRight + glide, baseline);
+  ctx.fillText("D", dLeft + mD.actualBoundingBoxLeft - glide, baseline);
+
+  // THE / COMPANY, centred on the RED word.
+  const left = rRight - (mR.actualBoundingBoxLeft + mR.actualBoundingBoxRight);
+  const right = dLeft + (mD.actualBoundingBoxLeft + mD.actualBoundingBoxRight);
   const cx = (left + right) / 2;
 
-  const wordSize = size * 0.24;
+  const wordSize = size * 0.3;
   ctx.font = `400 ${wordSize}px ${family}`;
   const wordCap = ctx.measureText("T").actualBoundingBoxAscent;
-  const gap = capPx * 0.3;
-  const rise = (1 - words) * capPx * 0.06;
+  const space = capPx * 0.42;
+  const rise = (1 - words) * capPx * 0.1;
   ctx.globalAlpha = words;
   ctx.fillStyle = LOCKUP_WORD_COLOR;
-  fillTracked(ctx, "THE", cx, baseline - capPx - gap + rise, wordSize * 0.42, "center");
-  fillTracked(ctx, "COMPANY", cx, baseline + gap + wordCap - rise, wordSize * 0.42, "center");
+  fillTracked(ctx, "THE", cx, baseline - capPx - space + rise, wordSize * 0.6, "center");
+  fillTracked(ctx, "COMPANY", cx, baseline + space + wordCap - rise, wordSize * 0.6, "center");
   ctx.restore();
 }
