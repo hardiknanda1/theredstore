@@ -1,32 +1,25 @@
-"""Builds an empty-studio plate from the OBSESSED still by removing the model and the type.
+"""Builds the closing hero assets from the two supplied stills.
 
-Each masked row is rebuilt by interpolating the wall/floor colour between the unmasked pixels
-on either side (the studio is lit in smooth horizontal gradients), then the fine fabric texture
-of the wall is restored from an untouched band of the same rows.
+  1. studio plate  - the lehenga still with the model removed (the empty studio she dissolves into)
+  2. type sprite   - the white OBSESSED lettering matted out of the OBSESSED still, minus its centre E
+  3. E sprite      - that centre E on its own, which stays on screen when the rest dissolves
 
-Also cuts the centre E of OBSESSED into an alpha sprite, which the hero keeps on screen while
-the model and the rest of the word dissolve into the plate.
+The plate: each masked row is rebuilt by interpolating the wall/floor colour between the
+unmasked pixels on either side (the studio is lit in smooth horizontal gradients), then the
+fine fabric texture of the wall is restored from an untouched band of the same rows.
 
-Usage: python3 scripts/hero_plate.py <obsessed-image> <plate-out.png> [<e-sprite-out.png>]
+The type: pixels near a letter are unmixed as  pixel = a * white + (1 - a) * background,  with
+the background estimated locally from the surrounding non-letter pixels, which gives clean
+anti-aliased edges and ignores the gold jewellery behind the word.
+
+Usage: python3 scripts/hero_plate.py <lehenga-still> <obsessed-still> <plate.png> <type.png> <e.png>
 """
 import sys
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-src, out = sys.argv[1], sys.argv[2]
-img = Image.open(src).convert("RGB")
-W, H = img.size
-a = np.array(img).astype(float)
-
-TEXT = (322, 316, 1362, 474)  # OBSESSED line (crosses the pillar edge at the O)
-girl = Image.new("L", (W, H), 0)
-d = ImageDraw.Draw(girl)
-d.rectangle((425, 0, 1245, 900), fill=255)  # model, veil, arms, kaleeras
-d.ellipse((470, 800, 1260, 990), fill=255)  # contact shadow under the skirt
-mask = girl.copy()
-ImageDraw.Draw(mask).rectangle(TEXT, fill=255)
-m = np.array(girl) > 0
+lehenga_path, obsessed_path, plate_out, type_out, e_out = sys.argv[1:6]
 
 
 def box(x, r, axis):
@@ -43,52 +36,68 @@ def blur(x, r):
     return x
 
 
-low = blur(a, 3)
-high = a - low  # fabric / floor texture
+# ---------------------------------------------------------------- 1. studio plate
+img = Image.open(lehenga_path).convert("RGB")
+W, H = img.size
+a = np.array(img).astype(float)
 
+mask = Image.new("L", (W, H), 0)
+d = ImageDraw.Draw(mask)
+d.rectangle((468, 18, 1205, 892), fill=255)  # model, veil, arms, kaleeras
+d.ellipse((500, 800, 1180, 975), fill=255)  # contact shadow under the skirt
+m = np.array(mask) > 0
+
+low = blur(a, 3)
+high = a - low
 fill = low.copy()
 for y in range(H):
     xs = np.where(m[y])[0]
     if not len(xs):
         continue
     x0, x1 = xs.min(), xs.max()
-    left = low[y, max(0, x0 - 6) : x0 - 1].mean(0) if x0 > 1 else low[y, x1 + 2 : x1 + 8].mean(0)
-    right = low[y, x1 + 2 : min(W, x1 + 8)].mean(0) if x1 < W - 2 else left
+    left = low[y, max(0, x0 - 6) : x0 - 1].mean(0)
+    right = low[y, x1 + 2 : min(W, x1 + 8)].mean(0)
     t = np.linspace(0, 1, x1 - x0 + 1)[:, None]
-    # ease the blend so the gradient keeps the soft studio fall-off rather than a hard ramp
     t = t * t * (3 - 2 * t) * 0.5 + t * 0.5
     fill[y, x0 : x1 + 1] = left * (1 - t) + right * t
-
-# smooth vertically inside the mask so row-to-row noise in the edge samples does not streak
 smooth = blur(fill, 6)
 mf = m.astype(float)[..., None]
 fill = fill * (1 - mf) + smooth * mf
 
-# The type line is filled vertically from the rows just above and below it, which keeps the
-# pillar edge crisp where the O overlaps it.
-tx0, ty0, tx1, ty1 = TEXT
-top = fill[ty0 - 3 : ty0, tx0 : tx1 + 1].mean(0)
-bottom = fill[ty1 + 1 : ty1 + 4, tx0 : tx1 + 1].mean(0)
-t = np.linspace(0, 1, ty1 - ty0 + 1)[:, None, None]
-fill[ty0 : ty1 + 1, tx0 : tx1 + 1] = top * (1 - t) + bottom * t
-
-# texture: borrow the high-frequency detail from the clean band to the right of the model
-tex = np.zeros_like(a)
-band = high[:, 1370:1660]  # clear of the D
-reps = int(np.ceil(W / band.shape[1])) + 1
-tiled = np.concatenate([band] * reps, axis=1)[:, :W]
-tex[:] = tiled
-
+band = high[:, 1290:1640]  # clean wall/floor to the right of the model
+tex = np.concatenate([band] * (W // band.shape[1] + 2), axis=1)[:, :W]
 feather = np.array(mask.filter(ImageFilter.GaussianBlur(10))).astype(float)[..., None] / 255
 plate = a * (1 - feather) + (fill + tex) * feather
-Image.fromarray(plate.clip(0, 255).astype(np.uint8)).save(out)
+Image.fromarray(plate.clip(0, 255).astype(np.uint8)).save(plate_out)
 
-if len(sys.argv) > 3:
-    # Centre E: x 779-845, y 365-455 in the 1671x941 still; the box adds a little margin.
-    x0, y0, x1, y1 = 770, 355, 856, 466
-    c = a[y0:y1, x0:x1]
-    t = np.clip((c.min(2) - 110) / (235 - 110), 0, 1)
-    alpha = t * t * (3 - 2 * t)
-    solid = c[alpha > 0.98].mean(0)
-    rgba = np.dstack([np.broadcast_to(solid, c.shape), alpha * 255]).astype(np.uint8)
-    Image.fromarray(rgba, "RGBA").save(sys.argv[3], optimize=True)
+# ---------------------------------------------------------------- 2/3. type mattes
+ob = np.array(Image.open(obsessed_path).convert("RGB")).astype(float)
+BAND = (322, 316, 1362, 474)  # OBSESSED line in the 1671x941 still
+E_BOX = (770, 355, 856, 466)  # the centre E, with a little margin
+x0, y0, x1, y1 = BAND
+p = ob[y0:y1, x0:x1]
+white = np.array([251.0, 248.0, 247.0])
+
+core = p.min(2) > 205  # certainly letter
+rows = np.arange(y0, y1)[:, None]
+core &= (rows >= 360) & (rows <= 462)  # the letters' cap band; drops highlights on the hands above
+near = np.array(Image.fromarray((core * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(9))) > 0
+bgw = (~near).astype(float)
+bg = np.stack([blur(p[..., c] * bgw, 5) for c in range(3)], -1) / (blur(bgw, 5)[..., None] + 1e-4)
+diff = white - bg
+alpha = ((p - bg) * diff).sum(-1) / ((diff * diff).sum(-1) + 1e-4)
+alpha = np.clip(alpha, 0, 1) * near
+alpha[core] = 1.0
+
+
+def sprite(al):
+    rgba = np.dstack([np.broadcast_to(white, al.shape + (3,)), al * 255]).astype(np.uint8)
+    return Image.fromarray(rgba, "RGBA")
+
+
+ex0, ey0, ex1, ey1 = E_BOX
+e_alpha = np.zeros_like(alpha)
+e_alpha[ey0 - y0 : ey1 - y0, ex0 - x0 : ex1 - x0] = alpha[ey0 - y0 : ey1 - y0, ex0 - x0 : ex1 - x0]
+rest = alpha - e_alpha
+sprite(rest).save(type_out, optimize=True)
+sprite(e_alpha[ey0 - y0 : ey1 - y0, ex0 - x0 : ex1 - x0]).save(e_out, optimize=True)

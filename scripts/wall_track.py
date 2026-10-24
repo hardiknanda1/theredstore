@@ -1,9 +1,9 @@
 """Measures the left wall's per-frame horizontal drift and writes src/lib/hero/wall-track.ts.
 
-Frames 1-144 come from the original film; 145-150 and 151-179 are the two supplied stills
-(lehenga, OBSESSED), which are framed slightly differently, so they get their own offset.
+Frames 1-144 come from the original film; 145-179 and the closing studio shot use the
+lehenga still, which gets its own measured offset.
 
-Usage: python3 scripts/wall_track.py <film-frames-dir> <lehenga-still> <obsessed-still> src/lib/hero/wall-track.ts
+Usage: python3 scripts/wall_track.py <film-frames-dir> <lehenga-still> src/lib/hero/wall-track.ts
 """
 import os
 import re
@@ -12,7 +12,7 @@ import sys
 import numpy as np
 from PIL import Image
 
-frames_dir, lehenga, obsessed, out = sys.argv[1:5]
+frames_dir, lehenga, out = sys.argv[1:4]
 FILM_FRAMES = 144
 
 
@@ -38,15 +38,14 @@ v[bad] = np.interp(idx[bad], idx[~bad], v[~bad])
 smooth = np.convolve(np.pad(v, 3, mode="edge"), np.ones(7) / 7, "valid")
 base = smooth[0]
 film = smooth - base
-still_a = pillar_edge(lehenga) - base
-still_b = pillar_edge(obsessed) - base
-values = list(film) + [still_a] * 6 + [still_b] * 29
+still = pillar_edge(lehenga) - base
+values = list(film) + [still] * 35
 
 lines = [
     "/**",
     " * Horizontal drift of the left wall (pillar edge) per frame, as a fraction of frame width,",
-    " * measured relative to frame 1: frames 1–144 from the film, 145–150 and 151–179 from the two",
-    " * stills. Keeps the wall typography locked to the wall at every frame.",
+    " * measured relative to frame 1: frames 1–144 from the film, 145–179 from the lehenga still.",
+    " * Keeps the wall typography locked to the wall at every frame.",
     " */",
     "export const WALL_DRIFT: readonly number[] = [",
 ]
@@ -54,7 +53,7 @@ for i in range(0, len(values), 10):
     lines.append("  " + ", ".join("%.4f" % x for x in values[i : i + 10]) + ",")
 lines.append("];")
 lines.append("")
-lines.append("/** Drift for the closing studio shot, which shares the OBSESSED still's framing. */")
-lines.append("export const STUDIO_DRIFT = %.4f;" % still_b)
+lines.append("/** Drift for the closing studio shot, which shares the lehenga still's framing. */")
+lines.append("export const STUDIO_DRIFT = %.4f;" % still)
 open(out, "w").write("\n".join(lines) + "\n")
-print("stills:", round(still_a, 4), round(still_b, 4))
+print("still offset:", round(still, 4))

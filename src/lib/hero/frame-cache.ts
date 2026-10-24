@@ -1,4 +1,4 @@
-import { E_SPRITE_URL, FILM_FRAMES, frameUrl, stillUrl, type FrameSet, type HeroAssets, type StillId } from "./sequence";
+import { E_SPRITE_URL, FILM_FRAMES, TYPE_SPRITE_URL, frameUrl, stillUrl, type FrameSet, type HeroAssets, type StillId } from "./sequence";
 
 /** Coarse-to-fine order: every 32nd, 16th … film frame, so any scroll position soon has a neighbour. */
 function filmOrder(count: number): number[] {
@@ -15,19 +15,20 @@ function filmOrder(count: number): number[] {
   return order;
 }
 
-const STILLS: StillId[] = ["lehenga", "obsessed", "studio"];
+const STILLS: StillId[] = ["lehenga", "studio"];
 
 /**
  * Loads and decodes the hero imagery (img.decode keeps decoding off the main thread), a few
  * at a time, and keeps the decoded images for instant drawing. Frame 1 loads first, then the
- * three stills and the E sprite, then the rest of the film coarse-to-fine.
+ * two stills and the type sprites, then the rest of the film coarse-to-fine.
  */
 export class HeroAssetCache implements HeroAssets {
   private readonly frames: (HTMLImageElement | null)[] = new Array(FILM_FRAMES).fill(null);
   private readonly stills = new Map<StillId, HTMLImageElement>();
+  typeSprite: HTMLImageElement | null = null;
   eSprite: HTMLImageElement | null = null;
   loaded = 0;
-  readonly total = FILM_FRAMES + STILLS.length + 1;
+  readonly total = FILM_FRAMES + STILLS.length + 2;
   private disposed = false;
   private pending = new Set<HTMLImageElement>();
 
@@ -40,6 +41,7 @@ export class HeroAssetCache implements HeroAssets {
   start() {
     const jobs: (() => Promise<void>)[] = [
       ...STILLS.map((id) => () => this.load(stillUrl(this.set, id), (img) => this.stills.set(id, img))),
+      () => this.load(TYPE_SPRITE_URL, (img) => (this.typeSprite = img)),
       () => this.load(E_SPRITE_URL, (img) => (this.eSprite = img)),
       ...filmOrder(FILM_FRAMES).map((i) => () => this.load(frameUrl(this.set, i), (img) => (this.frames[i] = img))),
     ];
@@ -92,6 +94,7 @@ export class HeroAssetCache implements HeroAssets {
     this.pending.clear();
     this.frames.fill(null);
     this.stills.clear();
+    this.typeSprite = null;
     this.eSprite = null;
   }
 }

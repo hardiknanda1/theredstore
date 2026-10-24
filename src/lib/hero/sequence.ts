@@ -4,8 +4,8 @@ import { STUDIO_DRIFT, WALL_DRIFT } from "./wall-track";
  * Timeline of the hero, in frame units (one unit = one frame of scroll):
  *
  *   0 – 144   film frames 1–144, exactly as supplied
- *   144 – 150 frames 145–150: the lehenga still (cross-faded in from frame 144)
- *   150 – 179 frames 151–179: the OBSESSED still (the type fades in over two frames)
+ *   144 – 179 frames 145–179: the lehenga still, framed like the film (cross-faded in from frame 144)
+ *   150 – 152 OBSESSED fades in over it
  *   179 – 191 the model and OBSESSED dissolve into the empty studio; the centre E stays
  *   189 – 207 R and D, then THE and COMPANY, form around the E
  *   207 – 215 hold
@@ -27,7 +27,7 @@ const smoothstep = (a: number, b: number, x: number) => {
 };
 
 export type FrameSet = "desktop" | "mobile";
-export type StillId = "lehenga" | "obsessed" | "studio";
+export type StillId = "lehenga" | "studio";
 
 export function frameUrl(set: FrameSet, index: number): string {
   const n = String(index + 1).padStart(3, "0");
@@ -38,7 +38,11 @@ export function stillUrl(set: FrameSet, id: StillId): string {
   return `/hero/${set}/${id}.webp`;
 }
 
-/** The centre E of OBSESSED, cut out with an alpha mask so it can stay while the rest dissolves. */
+/**
+ * OBSESSED is drawn as two alpha-matted layers over the lehenga still: the word without its
+ * centre E, and that E on its own, which stays on screen while the rest dissolves.
+ */
+export const TYPE_SPRITE_URL = "/hero/type-sprite.png";
 export const E_SPRITE_URL = "/hero/e-sprite.png";
 
 /** Aspect ratio of the film. */
@@ -147,6 +151,7 @@ export interface HeroAssets {
   /** The requested film frame if decoded, otherwise the nearest decoded film frame. */
   film(index: number): HTMLImageElement | null;
   still(id: StillId): HTMLImageElement | null;
+  typeSprite: HTMLImageElement | null;
   eSprite: HTMLImageElement | null;
 }
 
@@ -164,7 +169,6 @@ function drawPicture(ctx: CanvasRenderingContext2D, img: HTMLImageElement | null
  */
 export function drawScene(ctx: CanvasRenderingContext2D, r: Rect, t: number, a: HeroAssets): number {
   const lehenga = a.still("lehenga");
-  const obsessed = a.still("obsessed");
 
   if (t < LEHENGA_START) {
     const index = filmIndexFor(t);
@@ -172,38 +176,39 @@ export function drawScene(ctx: CanvasRenderingContext2D, r: Rect, t: number, a: 
     return WALL_DRIFT[index] ?? 0;
   }
 
-  if (t < OBSESSED_START) {
+  if (t < FILM_END) {
     // Frame 145 cross-fades from the film's frame 144 into the lehenga still.
     const mix = lehenga ? smoothstep(LEHENGA_START, LEHENGA_START + 1, t) : 0;
     if (mix < 1) drawPicture(ctx, a.film(FILM_FRAMES - 1), r);
     drawPicture(ctx, lehenga, r, mix);
+    // OBSESSED fades in over the first two frames after 150.
+    const typeIn = smoothstep(OBSESSED_START, OBSESSED_START + 2, t);
+    drawType(ctx, r, a, typeIn, typeIn);
     const from = WALL_DRIFT[FILM_FRAMES - 1] ?? 0;
-    return from + ((WALL_DRIFT[LEHENGA_START] ?? from) - from) * mix;
-  }
-
-  if (t < FILM_END) {
-    // OBSESSED fades in over the first two frames of its still.
-    const mix = obsessed ? smoothstep(OBSESSED_START, OBSESSED_START + 2, t) : 0;
-    if (mix < 1 && !drawPicture(ctx, lehenga, r)) drawPicture(ctx, a.film(FILM_FRAMES - 1), r);
-    drawPicture(ctx, obsessed, r, mix);
-    return WALL_DRIFT[Math.min(Math.floor(t), FILM_END - 1)] ?? STUDIO_DRIFT;
+    const to = WALL_DRIFT[Math.min(Math.floor(t), FILM_END - 1)] ?? STUDIO_DRIFT;
+    return from + (to - from) * mix;
   }
 
   // The model and OBSESSED dissolve into the empty studio; the centre E is held throughout.
   const studio = a.still("studio");
   const fade = studio ? smoothstep(DISSOLVE[0], DISSOLVE[1], t) : 0;
-  drawPicture(ctx, studio, r);
-  if (!drawPicture(ctx, obsessed, r, 1 - fade) && !studio) drawPicture(ctx, lehenga, r);
-  if (a.eSprite && obsessed) {
-    ctx.drawImage(
-      a.eSprite,
-      r.x + E_SPRITE.x * r.w,
-      r.y + E_SPRITE.y * r.h,
-      E_SPRITE.w * r.w,
-      E_SPRITE.h * r.h,
-    );
-  }
+  if (!drawPicture(ctx, studio, r)) drawPicture(ctx, lehenga, r);
+  drawPicture(ctx, lehenga, r, 1 - fade);
+  drawType(ctx, r, a, 1 - fade, 1);
   return STUDIO_DRIFT;
+}
+
+/** Draws OBSESSED: the word (without its centre E) at `alpha`, and the E at `eAlpha`. */
+function drawType(ctx: CanvasRenderingContext2D, r: Rect, a: HeroAssets, alpha: number, eAlpha: number) {
+  if (alpha > 0 && a.typeSprite) {
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(a.typeSprite, r.x + TYPE.x * r.w, r.y + TYPE.y * r.h, TYPE.w * r.w, TYPE.h * r.h);
+  }
+  if (eAlpha > 0 && a.eSprite) {
+    ctx.globalAlpha = eAlpha;
+    ctx.drawImage(a.eSprite, r.x + E_SPRITE.x * r.w, r.y + E_SPRITE.y * r.h, E_SPRITE.w * r.w, E_SPRITE.h * r.h);
+  }
+  ctx.globalAlpha = 1;
 }
 
 /** Draws text with manual tracking (canvas letterSpacing is not universally supported). */
@@ -255,9 +260,10 @@ export function drawWallText(ctx: CanvasRenderingContext2D, r: Rect, drift: numb
   ctx.restore();
 }
 
-/** OBSESSED still is 1671×941; the sprite and the E's ink box are measured in its pixels. */
+/** The type was matted from the 1671×941 OBSESSED still; positions are in its pixels. */
 const STILL_W = 1671;
 const STILL_H = 941;
+const TYPE = { x: 322 / STILL_W, y: 316 / STILL_H, w: 1040 / STILL_W, h: 158 / STILL_H };
 const E_SPRITE = { x: 770 / STILL_W, y: 355 / STILL_H, w: 86 / STILL_W, h: 111 / STILL_H };
 const E_INK = { left: 779 / STILL_W, right: 846 / STILL_W, top: 365 / STILL_H, baseline: 456 / STILL_H };
 /** Ink gap between letters in OBSESSED, as a fraction of cap height (≈ 64px gaps at 91px caps). */
